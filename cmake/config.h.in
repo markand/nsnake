@@ -24,4 +24,6 @@
 #cmakedefine HAVE_SIGWINCH
 #cmakedefine HAVE_RANDOM
 
+#define NSNAKE_SCOREFILE "@NSNAKE_SCORESDIR@/scores"
+
 #endif /* !_CONFIG_H_ */

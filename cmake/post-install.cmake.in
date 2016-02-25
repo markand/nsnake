@@ -1,0 +1,34 @@
+#
+# CMakeLists.txt -- CMake build system for nsnake
+#
+# Copyright (c) 2011-2016 David Demelier <markand@malikania.fr>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+
+#
+# Change owner/group of the executable and the database directory.
+#
+
+if (NOT EXISTS "@NSNAKE_SCORESDIR@")
+	message(STATUS "Creating game database directory: @NSNAKE_SCORESDIR@")
+	file(MAKE_DIRECTORY "@NSNAKE_SCORESDIR@")
+endif ()
+
+if (NOT WIN32)
+        execute_process(
+                COMMAND chown @WITH_USER@:@WITH_GROUP@ "${CMAKE_INSTALL_PREFIX}/bin/nsnake"
+                COMMAND chown @WITH_USER@:@WITH_GROUP@ "@NSNAKE_SCORESDIR@"
+                COMMAND chmod 2775 "@NSNAKE_SCORESDIR@"
+        )
+endif ()

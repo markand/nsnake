@@ -5,7 +5,8 @@ nsnake current
 --------------
 
   - Switch to CMake,
-  - Port to Windows using MinGW.
+  - Port to Windows using MinGW,
+  - Add -v option for verbosity.
 
 nsnake 1.4.0 2012-01-12
 -----------------------

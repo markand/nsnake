@@ -22,6 +22,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "config.h"
+
 #if defined(HAVE_ERR)
 #  include <err.h>
 #endif
@@ -41,10 +43,6 @@
 #  include <Windows.h>
 #else
 #  include <pwd.h>
-#endif
-
-#ifndef SCOREFILE
-#define SCOREFILE	"/var/db/nsnake/scores"
 #endif
 
 #define	HEIGHT		23
@@ -106,6 +104,7 @@ static int	setcolors	= 1;	/* enable colors */
 static int	warp		= 1;	/* enable wall crossing */
 static int	color		= 2;	/* green color by default */
 static int	noscore		= 0;	/* do not score */
+static int	verbose		= 0;	/* be verbose */
 
 static uint8_t	grid[HEIGHT][WIDTH] = { { EMPTY } };
 static WINDOW	*top = NULL;
@@ -147,6 +146,7 @@ main(int argc, char *argv[])
 {
 	int running;
 	int x, y, ch;
+	int showscore = 0;
 
 	struct snake sn = {
 		.score = 0,	.length = 4,
@@ -158,12 +158,13 @@ main(int argc, char *argv[])
 	struct timespec delay = { .tv_sec = 0, .tv_nsec = 100000000L };
 
 	/* Process options */
-	while ((ch = getopt(argc, argv, "cC:nsw")) != -1) {
+	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
 		switch (ch) {
 		case 'c': setcolors = 0;	break;
 		case 'C': color = atoi(optarg);	break;
 		case 'n': noscore = 1;		break;
-		case 's': showscores();		break;
+		case 's': showscore = 1;	break;
+		case 'v': verbose = 1;		break;
 		case 'w': warp = 0;		break;
 		case '?':
 		default :
@@ -171,6 +172,9 @@ main(int argc, char *argv[])
 			  /* NOTREACHED */
 		}
 	}
+
+	if (showscore)
+		showscores();
 
 	argc -= optind;
 	argv += optind;
@@ -289,7 +293,7 @@ main(int argc, char *argv[])
 	    "You died...\n" : "", sn.score);
 
 	if (!noscore && !registerscore(&sn))
-		err(1, "Could not write score file %s", SCOREFILE);
+		err(1, "Could not write score file %s", NSNAKE_SCOREFILE);
 	
 	return 0;
 }
@@ -452,7 +456,7 @@ registerscore(const struct snake *sn)
 	sc.time		= time(NULL);
 	sc.wc		= warp;
 
-	reshandler = (access(SCOREFILE, F_OK) == -1) ? &appendscore : &insertscore;
+	reshandler = (access(NSNAKE_SCOREFILE, F_OK) == -1) ? &appendscore : &insertscore;
 
 	return reshandler(&sc);
 }
@@ -468,7 +472,7 @@ appendscore(const struct score *sc)
 	char header[12] = "nsnake-score";
 	uint32_t nscore = 1;
 
-	if (!(fp = fopen(SCOREFILE, "w+b")))
+	if (!(fp = fopen(NSNAKE_SCOREFILE, "w+b")))
 		return 0;
 
 	fwrite(header, sizeof (header), 1, fp);
@@ -488,7 +492,7 @@ insertscore(const struct score *sc)
 	char header[12] = { 0 };
 	struct score *buffer;
 
-	if (!(fp = fopen(SCOREFILE, "r+b")))
+	if (!(fp = fopen(NSNAKE_SCOREFILE, "r+b")))
 		return 0;
 
 	fread(header, sizeof (header), 1, fp);
@@ -541,10 +545,11 @@ showscores(void)
 	char header[12] = { 0 };
 	struct score sc;
 
-	if (!(fp = fopen(SCOREFILE, "rb")))
-		err(1, "Could not read %s", SCOREFILE);
+	if (!(fp = fopen(NSNAKE_SCOREFILE, "rb")))
+		err(1, "Could not read %s", NSNAKE_SCOREFILE);
 
-	printf("Wall crossing %s\n", (warp) ? "enabled" : "disabled");
+	if (verbose)
+		printf("Wall crossing %s\n", (warp) ? "enabled" : "disabled");
 
 	fread(header, sizeof (header), 1, fp);
 	if (strncmp(header, "nsnake-score", sizeof (header)) != 0)
@@ -558,8 +563,8 @@ showscores(void)
 			char date[128] = { 0 };
 			struct tm *tm = localtime(&sc.time);
 
-			strftime(date, sizeof (date), "%F %H:%M", tm);
-			printf("%s\t\t%u\t\t%s\n", sc.name, sc.score, date);
+			strftime(date, sizeof (date), "%c", tm);
+			printf("%-16s%-10u %s\n", sc.name, sc.score, date);
 		}
 	}
 
@@ -623,11 +628,13 @@ quit(const struct snake *sn)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: nsnake [-cnsw] [-C color]\n");
+	fprintf(stderr, "usage: nsnake [-cnsvw] [-C color]\n");
 	exit(1);
 }
 
 #if !defined(HAVE_ERR)
+
+#include <errno.h>
 
 static void
 err(int code, const char *fmt, ...)

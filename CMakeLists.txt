@@ -1,7 +1,7 @@
 #
-# CMakeLists.txt -- CMake build system for irccd
+# CMakeLists.txt -- CMake build system for nsnake
 #
-# Copyright (c) 2013-2016 David Demelier <markand@malikania.fr>
+# Copyright (c) 2011-2016 David Demelier <markand@malikania.fr>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,10 @@ option(WITH_MAN "Install manuals" On)
 
 set(WITH_DOCDIR share/doc/irccd CACHE STRING "Directory for additional documentation")
 set(WITH_MANDIR share/man CACHE STRING "Directory for manuals")
+set(WITH_DBDIR var/db/nsnake CACHE STRING "Score directory")
+
+set(WITH_USER games CACHE STRING "Binary uid")
+set(WITH_GROUP games CACHE STRING "Binary gid")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -51,8 +55,14 @@ if (MSVC)
 	message(FATAL_ERROR "NSnake support MinGW only")
 endif ()
 
+if (IS_ABSOLUTE ${WITH_DBDIR})
+	set(NSNAKE_SCORESDIR ${WITH_DBDIR})
+else ()
+	set(NSNAKE_SCORESDIR ${CMAKE_INSTALL_PREFIX}/${WITH_DBDIR})
+endif ()
+
 configure_file(
-	${nsnake_SOURCE_DIR}/config.h.in
+	${nsnake_SOURCE_DIR}/cmake/config.h.in
 	${nsnake_BINARY_DIR}/config.h
 )
 
@@ -85,7 +95,22 @@ target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR})
 #
 # Installation of files.
 #
-install(TARGETS nsnake DESTINATION bin)
+install(
+	TARGETS nsnake
+	DESTINATION bin
+	PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETGID
+)
+
+#
+# Post install script for database directory and permissions.
+#
+configure_file(
+	${nsnake_SOURCE_DIR}/cmake/post-install.cmake.in
+	${nsnake_BINARY_DIR}/post-install.cmake
+	@ONLY
+)
+
+install(SCRIPT ${nsnake_BINARY_DIR}/post-install.cmake)
 
 if (WITH_MAN)
 	install(FILES nsnake.6 DESTINATION ${WITH_MANDIR}/man6)
