@@ -104,6 +104,7 @@ check_include_file(err.h HAVE_ERR_H)
 check_function_exists(err HAVE_ERR)
 check_function_exists(errx HAVE_ERRX)
 check_function_exists(resizeterm HAVE_RESIZETERM)
+check_function_exists(resize_term HAVE_RESIZE_TERM)
 check_function_exists(random HAVE_RANDOM)
 check_function_exists(srandom HAVE_SRANDOM)
 

@@ -588,6 +588,9 @@ resizehandler(int signal)
 #if defined(HAVE_RESIZETERM)
 	resizeterm(LINES, COLS);
 #endif
+#if defined(HAVE_RESIZE_TERM)
+	resize_term(LINES, COLS);
+#endif
 	refresh(); clear();
 
 	/* Color the top bar */

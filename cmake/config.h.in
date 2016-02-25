@@ -21,6 +21,7 @@
 
 #cmakedefine HAVE_ERR
 #cmakedefine HAVE_RESIZETERM
+#cmakedefine HAVE_RESIZE_TERM
 #cmakedefine HAVE_SIGWINCH
 #cmakedefine HAVE_RANDOM
 
