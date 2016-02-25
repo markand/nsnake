@@ -95,11 +95,7 @@ target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR})
 #
 # Installation of files.
 #
-install(
-	TARGETS nsnake
-	DESTINATION bin
-	PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETGID
-)
+install(TARGETS nsnake DESTINATION bin)
 
 #
 # Post install script for database directory and permissions.

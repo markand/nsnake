@@ -28,6 +28,7 @@ endif ()
 if (NOT WIN32)
         execute_process(
                 COMMAND chown @WITH_USER@:@WITH_GROUP@ "${CMAKE_INSTALL_PREFIX}/bin/nsnake"
+                COMMAND chmod 2555 "${CMAKE_INSTALL_PREFIX}/bin/nsnake"
                 COMMAND chown @WITH_USER@:@WITH_GROUP@ "@NSNAKE_SCORESDIR@"
                 COMMAND chmod 2775 "@NSNAKE_SCORESDIR@"
         )
