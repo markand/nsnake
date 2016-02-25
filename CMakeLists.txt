@@ -23,6 +23,12 @@ project(nsnake C)
 # General setup.
 # -------------------------------------------------------------------
 #
+
+set(NSNAKE_VERSION_MAJOR 2)
+set(NSNAKE_VERSION_MINOR 0)
+set(NSNAKE_VERSION_PATCH 0)
+set(NSNAKE_VERSION "${NSNAKE_VERSION_MAJOR}.${NSNAKE_VERSION_MINOR}.${NSNAKE_VERSION_PATCH}")
+
 set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_CXX_FLAGS}")
 
 include(CheckIncludeFile)
@@ -183,6 +189,17 @@ if (WIN32)
 		DESTINATION bin
 	)
 endif ()
+
+#
+# Packaging stuff.
+# -------------------------------------------------------------------
+#
+
+set(CPACK_PACKAGE_VERSION ${NSNAKE_VERSION})
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "nsnake-${NSNAKE_VERSION}")
+set(CPACK_SOURCE_GENERATOR ZIP TXZ)
+set(CPACK_SOURCE_IGNORE_FILES .hg .hgignore)
+include(CPack)
 
 #
 # Summary.
