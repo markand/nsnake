@@ -1,0 +1,74 @@
+.\"
+.\" Copyright (c) 2011-2016 David Demelier <markand@malikania.fr>
+.\" 
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 27, 2011
+.Dt NSNAKE 6
+.Os
+.Sh NAME
+.Nm nsnake
+.Nd a snake game for your terminal
+.Sh SYNOPSIS
+.Nm nsnake
+.Op Fl cnsw
+.Op Fl C Ar color
+.Sh DESCRIPTION
+You are controlling a snake where the goal is eating food spawning randomly on
+the screen.
+.Pp
+There are two types of food, normal and free, respectively
+.Ar + , * .
+.Pp
+The head of the snake is symbolized with an
+.Ar @ .
+.Pp
+Each time you eat a piece of food, the snake will be grown by two. If you
+eat a free piece of food the score will be increased but not the snake's length.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl c
+Disable colors, by default if the terminal is capable colors are enabled.
+.It Fl C Ar color
+Specify an alternate color between 0 and 8. (default 2)
+.It Fl n
+Do not try to update score file.
+.It Fl s
+Only display high score sorting by descending and exit.
+.It Fl w
+Disable wall crossing. Can be used together with
+.Fl s
+to show score with wall crossing disabled.
+.El
+.Sh KEYS
+To move the snake the following keys may be used:
+.Ss Up, k
+Move to up
+.Ss Down, j
+Move to down
+.Ss Left, h
+Move to left
+.Ss Right, l
+Move to right
+.Ss p
+Suspend the game until p is pressed again.
+.Ss c
+Change the color.
+.Ss q
+Quit the game and save the score.
+.Sh AUTHORS
+nsnake was written by David Demelier <markand@malikania.fr>
+.Sh BUGS
+The snake seems to be faster when moving vertically, this is due to terminal
+character dimensions.
