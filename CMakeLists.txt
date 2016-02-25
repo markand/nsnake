@@ -60,6 +60,25 @@ else ()
 endif ()
 
 #
+# The curses library
+# -------------------------------------------------------------------
+#
+if (WIN32)
+	if (CMAKE_SIZEOF_VOID_P MATCHES 8)
+		set(ARCH amd64)
+	else ()
+		set(ARCH x86)
+	endif ()
+
+	set(INCLUDES ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/include)
+	set(LIBS ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/lib/libpdcurses.a)
+else ()
+	find_package(Curses REQUIRED)
+	set(INCLUDES ${CURSES_INCLUDE_DIRS})
+	set(LIBS ${CURSES_LIBRARIES})
+endif ()
+
+#
 # Options.
 # -------------------------------------------------------------------
 #
@@ -78,6 +97,8 @@ set(WITH_GROUP ${DEFAULT_GROUP} CACHE STRING "Binary gid")
 # -------------------------------------------------------------------
 #
 
+set(CMAKE_REQUIRED_LIBRARIES ${LIBS})
+
 check_include_file(err.h HAVE_ERR_H)
 
 check_function_exists(err HAVE_ERR)
@@ -86,7 +107,7 @@ check_function_exists(resizeterm HAVE_RESIZETERM)
 check_function_exists(random HAVE_RANDOM)
 check_function_exists(srandom HAVE_SRANDOM)
 
-check_symbol_exists(SIGWINCH curses.h HAVE_SIGWINCH)
+check_symbol_exists(SIGWINCH signal.h HAVE_SIGWINCH)
 
 if (NOT HAVE_ERR_H OR NOT HAVE_ERRX)
 	set(HAVE_ERR FALSE)
@@ -129,26 +150,6 @@ configure_file(
 #
 
 add_executable(nsnake nsnake.c)
-
-#
-# For Windows, libpdcurses is bundled in nsnake, for other platforms, search for the curses library.
-#
-# We also install MinGW runtimes to the binary directory.
-#
-if (WIN32)
-	if (CMAKE_SIZEOF_VOID_P MATCHES 8)
-		set(ARCH amd64)
-	else ()
-		set(ARCH x86)
-	endif ()
-
-	set(INCLUDES ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/include)
-	set(LIBS ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/lib/libpdcurses.a)
-else ()
-	find_package(Curses REQUIRED)
-	set(INCLUDES ${CURSES_INCLUDE_DIRS})
-	set(LIBS ${CURSES_LIBRARIES})
-endif ()
 
 target_link_libraries(nsnake ${LIBS})
 target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR})
