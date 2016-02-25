@@ -148,14 +148,12 @@ main(int argc, char *argv[])
 	int x, y, ch;
 	int showscore = 0;
 
-	struct snake sn = {
-		.score = 0,	.length = 4,
-		.dirx = 1,	.diry = 0,
-		.pos = { {5, 10}, {5, 9}, {5, 8}, {5, 7} }
+	struct snake sn = { 0, 4, 1, 0, {
+		{5, 10}, {5, 9}, {5, 8}, {5, 7} }
 	};
 
-	struct food fd = { .type = NORM };
-	struct timespec delay = { .tv_sec = 0, .tv_nsec = 100000000L };
+	struct food fd = { NORM, 0, 0 };
+	struct timespec delay = { 0, 100000000L };
 
 	/* Process options */
 	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
@@ -613,7 +611,7 @@ resizehandler(int signal)
 static void
 quit(const struct snake *sn)
 {
-	struct timespec delay = { .tv_sec = 0, .tv_nsec = 50000000 };
+	struct timespec delay = { 0, 50000000 };
 	uint16_t i;
 
 	if (sn != NULL) {

@@ -47,13 +47,13 @@ if (NOT WIN32)
 	include(cmake/check-games.cmake)
 endif ()
 
-if (HAVE_USER_GAMES MATCHES 0)
+if (HAVE_USER_GAMES)
 	set(DEFAULT_USER games)
 else ()
 	set(DEFAULT_USER nobody)
 endif ()
 
-if (HAVE_GROUP_GAMES MATCHES 0)
+if (HAVE_GROUP_GAMES)
 	set(DEFAULT_GROUP games)
 else ()
 	set(DEFAULT_GROUP nobody)
@@ -106,12 +106,14 @@ set(WITH_GROUP ${DEFAULT_GROUP} CACHE STRING "Binary gid")
 set(CMAKE_REQUIRED_LIBRARIES ${LIBS})
 
 check_include_file(err.h HAVE_ERR_H)
+check_include_file(unistd.h HAVE_UNISTD_H)
 
 check_function_exists(err HAVE_ERR)
 check_function_exists(errx HAVE_ERRX)
+check_function_exists(getopt HAVE_GETOPT)
+check_function_exists(random HAVE_RANDOM)
 check_function_exists(resizeterm HAVE_RESIZETERM)
 check_function_exists(resize_term HAVE_RESIZE_TERM)
-check_function_exists(random HAVE_RANDOM)
 check_function_exists(srandom HAVE_SRANDOM)
 
 check_symbol_exists(SIGWINCH signal.h HAVE_SIGWINCH)
@@ -122,6 +124,19 @@ endif ()
 
 if (NOT HAVE_SRANDOM)
 	set(HAVE_RANDOM FALSE)
+endif ()
+
+if (NOT HAVE_UNISTD_H)
+	set(HAVE_GETOPT FALSE)
+endif ()
+
+if (NOT HAVE_GETOPT)
+	list(
+		APPEND
+		SOURCES
+		${nsnake_SOURCE_DIR}/extern/getopt.c
+		${nsnake_SOURCE_DIR}/extern/getopt.h
+	)
 endif ()
 
 if (MSVC)
@@ -156,10 +171,10 @@ configure_file(
 # -------------------------------------------------------------------
 #
 
-add_executable(nsnake nsnake.c)
+add_executable(nsnake nsnake.c ${SOURCES})
 
 target_link_libraries(nsnake ${LIBS})
-target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR})
+target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR} ${nsnake_SOURCE_DIR}/extern)
 
 #
 # Installation stuff.

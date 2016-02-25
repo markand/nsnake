@@ -20,10 +20,17 @@
 #define _CONFIG_H_
 
 #cmakedefine HAVE_ERR
+#cmakedefine HAVE_GETOPT
+#cmakedefine HAVE_RANDOM
 #cmakedefine HAVE_RESIZETERM
 #cmakedefine HAVE_RESIZE_TERM
 #cmakedefine HAVE_SIGWINCH
-#cmakedefine HAVE_RANDOM
+
+#if defined(HAVE_GETOPT)
+#  include <unistd.h>
+#else
+#  include <getopt.h>
+#endif
 
 #define NSNAKE_SCOREFILE "@NSNAKE_SCORESDIR@/scores"
 
