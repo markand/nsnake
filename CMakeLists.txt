@@ -29,7 +29,7 @@ set(NSNAKE_VERSION_MINOR 0)
 set(NSNAKE_VERSION_PATCH 0)
 set(NSNAKE_VERSION "${NSNAKE_VERSION_MAJOR}.${NSNAKE_VERSION_MINOR}.${NSNAKE_VERSION_PATCH}")
 
-set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_C_FLAGS}")
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
