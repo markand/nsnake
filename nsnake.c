@@ -351,6 +351,25 @@ nsnake_wait(unsigned ms)
 #endif
 }
 
+static void
+nsnake_quit(const struct snake *sn)
+{
+	uint16_t i;
+
+	if (sn != NULL) {
+		for (i = 0; i < sn->length; ++i) {
+			mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
+			nsnake_wait(50);
+			nsnake_refresh();
+		}
+	}
+
+	delwin(top);
+	delwin(frame);
+	delwin(stdscr);
+	endwin();
+}
+
 #if defined(HAVE_SIGWINCH)
 
 void
@@ -378,7 +397,7 @@ nsnake_resize_handler(int signal)
 	getmaxyx(stdscr, y, x);
 
 	if (x < WIDTH || y < HEIGHT) {
-		quit(NULL);
+		nsnake_quit(NULL);
 		errx(1, "Terminal has been resized too small, aborting");
 	}
 
@@ -387,25 +406,6 @@ nsnake_resize_handler(int signal)
 }
 
 #endif
-
-static void
-nsnake_quit(const struct snake *sn)
-{
-	uint16_t i;
-
-	if (sn != NULL) {
-		for (i = 0; i < sn->length; ++i) {
-			mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
-			nsnake_wait(50);
-			nsnake_refresh();
-		}
-	}
-
-	delwin(top);
-	delwin(frame);
-	delwin(stdscr);
-	endwin();
-}
 
 static void
 nsnake_usage(void)
