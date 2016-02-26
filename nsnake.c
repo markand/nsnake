@@ -16,11 +16,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+
+#include <curses.h>
+
+#if defined(_WIN32)
+#  include <io.h>
+#  include <lmcons.h>
+#  include <Windows.h>
+#else
+#  include <sys/types.h>
+#  include <pwd.h>
+#endif
 
 #include "config.h"
 
@@ -28,21 +40,9 @@
 #  include <err.h>
 #endif
 
-#include <signal.h>
-#include <unistd.h>
-#include <curses.h>
-#include <time.h>
-
 #if !defined(HAVE_RANDOM)
 #  define random rand
 #  define srandom srand
-#endif
-
-#if defined(_WIN32)
-#  include <lmcons.h>
-#  include <Windows.h>
-#else
-#  include <pwd.h>
 #endif
 
 #define	HEIGHT		23
@@ -125,6 +125,7 @@ static int	registerscore(const struct snake *);
 static int	appendscore(const struct score *);
 static int	insertscore(const struct score *);
 static void	showscores(void);
+static void	wait(unsigned ms);
 
 #if defined(HAVE_SIGWINCH)
 static void	resizehandler(int);
@@ -153,7 +154,6 @@ main(int argc, char *argv[])
 	};
 
 	struct food fd = { NORM, 0, 0 };
-	struct timespec delay = { 0, 100000000L };
 
 	/* Process options */
 	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	/* Game init */
-	srandom(time(NULL));
+	srandom((unsigned)time(NULL));
 
 #if defined(HAVE_SIGWINCH)
 	signal(SIGWINCH, resizehandler);
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 				sn.pos[0].y = HEIGHT - 2;
 		}
 
-		nanosleep(&delay, NULL);
+		wait(100);
 	}
 
 	/* The snake is dead. */
@@ -292,7 +292,7 @@ main(int argc, char *argv[])
 
 	if (!noscore && !registerscore(&sn))
 		err(1, "Could not write score file %s", NSNAKE_SCOREFILE);
-	
+
 	return 0;
 }
 
@@ -300,8 +300,11 @@ static int
 uinit(void)
 {
 	/* Ncurses init */
-	initscr(); noecho(); curs_set(0);
-	keypad(stdscr, TRUE); nodelay(stdscr, TRUE);
+	initscr();
+	noecho();
+	curs_set(0);
+	keypad(stdscr, TRUE);
+	nodelay(stdscr, TRUE);
 
 	if (COLS < (WIDTH + 1) || LINES < (HEIGHT + 1))	
 		return 0;
@@ -351,7 +354,7 @@ setgrid(struct snake *sn)
 	 * pos[2] takes pos[1] place, pos[3] takes pos[2] and so on.
 	 */
 	grid[sn->pos[sn->length-1].y][sn->pos[sn->length-1].x] = EMPTY;
-	memmove(&sn->pos[1], &sn->pos[0], sizeof (sn->pos));
+	memmove(&sn->pos[1], &sn->pos[0], sizeof (sn->pos) - sizeof (sn->pos[0]));
 }
 
 static void
@@ -570,6 +573,16 @@ showscores(void)
 	exit(0);
 }
 
+static void
+wait(unsigned ms)
+{
+#if defined(_WIN32)
+	Sleep(ms);
+#else
+	usleep(ms * 1000);
+#endif
+}
+
 #if defined(HAVE_SIGWINCH)
 
 void
@@ -611,13 +624,12 @@ resizehandler(int signal)
 static void
 quit(const struct snake *sn)
 {
-	struct timespec delay = { 0, 50000000 };
 	uint16_t i;
 
 	if (sn != NULL) {
 		for (i = 0; i < sn->length; ++i) {
 			(void)mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
-			nanosleep(&delay, NULL);
+			wait(50);
 			REFRESH();
 		}
 	}

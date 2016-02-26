@@ -19,6 +19,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#cmakedefine HAVE_UNISTD_H
+
 #cmakedefine HAVE_ERR
 #cmakedefine HAVE_GETOPT
 #cmakedefine HAVE_RANDOM
@@ -26,10 +28,26 @@
 #cmakedefine HAVE_RESIZE_TERM
 #cmakedefine HAVE_SIGWINCH
 
-#if defined(HAVE_GETOPT)
-#  include <unistd.h>
-#else
+/* access(2) */
+#if defined(_MSC_VER)
+
+/* Defined in MinGW but not in Visual Studio */
+enum {
+	F_OK = 00,
+	W_OK = 01,
+	R_OK = 04,
+	X_OK = 06
+};
+
+#endif
+
+/* getopt(3) */
+#if !defined(HAVE_GETOPT)
 #  include <getopt.h>
+#endif
+
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
 #endif
 
 #define NSNAKE_SCOREFILE "@NSNAKE_SCORESDIR@/scores"

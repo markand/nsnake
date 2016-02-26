@@ -29,7 +29,11 @@ set(NSNAKE_VERSION_MINOR 0)
 set(NSNAKE_VERSION_PATCH 0)
 set(NSNAKE_VERSION "${NSNAKE_VERSION_MAJOR}.${NSNAKE_VERSION_MINOR}.${NSNAKE_VERSION_PATCH}")
 
-set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_C_FLAGS}")
+if (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+	set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_C_FLAGS}")
+elseif (MSVC)
+	set(CMAKE_C_FLAGS "/wd4005 /wd4996 /D_CRT_SECURE_NO_WARNINGS ${CMAKE_C_FLAGS}")
+endif ()
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -76,8 +80,22 @@ if (WIN32)
 		set(ARCH x86)
 	endif ()
 
-	set(INCLUDES ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/include)
-	set(LIBS ${nsnake_SOURCE_DIR}/windows/${ARCH}/libpdcurses/lib/libpdcurses.a)
+	if (MSVC)
+		set(
+			LIBS
+			$<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/lib/pdcurses.lib>
+			$<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/lib/pdcurses.lib>
+		)
+
+		set(
+			INCLUDES
+			$<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/include>
+			$<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/include>
+		)
+	else ()
+		set(INCLUDES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/include)
+		set(LIBS ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/lib/libpdcurses.a)
+	endif ()
 else ()
 	find_package(Curses REQUIRED)
 	set(INCLUDES ${CURSES_INCLUDE_DIRS})
@@ -139,10 +157,6 @@ if (NOT HAVE_GETOPT)
 	)
 endif ()
 
-if (MSVC)
-	message(FATAL_ERROR "NSnake support MinGW only")
-endif ()
-
 if (IS_ABSOLUTE ${WITH_DBDIR})
 	set(NSNAKE_SCORESDIR ${WITH_DBDIR})
 else ()
@@ -172,7 +186,6 @@ configure_file(
 #
 
 add_executable(nsnake nsnake.c ${SOURCES})
-
 target_link_libraries(nsnake ${LIBS})
 target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR} ${nsnake_SOURCE_DIR}/extern)
 
@@ -198,9 +211,9 @@ if (WITH_DOCS)
 	install(FILES LICENSE.md DESTINATION ${WITH_DOCDIR})
 endif ()
 
-if (WIN32)
+if (MINGW)
 	install(
-		FILES ${nsnake_SOURCE_DIR}/windows/${ARCH}/libwinpthread-1.dll
+		FILES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libwinpthread-1.dll
 		DESTINATION bin
 	)
 endif ()
