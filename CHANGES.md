@@ -1,11 +1,11 @@
 NSnake CHANGES
 ==============
 
-nsnake current
---------------
+nsnake 2.0.0 2016-02-26
+-----------------------
 
   - Switch to CMake,
-  - Port to Windows using MinGW,
+  - Port to Windows,
   - Add -v option for verbosity.
 
 nsnake 1.4.0 2012-01-12
