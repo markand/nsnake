@@ -48,37 +48,37 @@
 #  define srandom srand
 #endif
 
-#define	HEIGHT		23
-#define WIDTH		78
-#define SIZE		((HEIGHT - 2) * (WIDTH - 2))
+#define HEIGHT              23
+#define WIDTH               78
+#define SIZE                ((HEIGHT - 2) * (WIDTH - 2))
 
 enum Grid {
-	GridEmpty,
-	GridWall,
-	GridSnake,
-	GridFood
+    GridEmpty,
+    GridWall,
+    GridSnake,
+    GridFood
 };
 
 struct snake {
-	uint32_t	score;		/* user score */
-	uint16_t	length;		/* snake's size */
-	int8_t		dirx;		/* direction in x could be 0, 1 or -1 */
-	int8_t		diry;		/* same for y */
+    uint32_t score;         /* user score */
+    uint16_t length;        /* snake's size */
+    int8_t dirx;            /* direction in x could be 0, 1 or -1 */
+    int8_t diry;            /* same for y */
 
-	struct {
-		uint8_t x;		/* each snake part has (x, y) position */
-		uint8_t y;		/* each part will be displayed */
-	} pos[SIZE];
+    struct {
+        uint8_t x;          /* each snake part has (x, y) position */
+        uint8_t y;          /* each part will be displayed */
+    } pos[SIZE];
 };
 
 struct food {
-	enum {
-		NORM = 0,		/* both increase the score but only NORM */
-		FREE			/* increase the snake's length too */
-	} type;
+    enum {
+        NORM = 0,           /* both increase the score but only NORM */
+        FREE                /* increase the snake's length too */
+    } type;
 
-	uint8_t x;			/* Position of the current food, will be used */
-	uint8_t y;			/* in grid[][]. */
+    uint8_t x;              /* Position of the current food, will be used */
+    uint8_t y;              /* in grid[][]. */
 };
 
 struct score {
@@ -87,10 +87,10 @@ struct score {
 #else
 #  define NAMELEN 32
 #endif
-	char		name[NAMELEN + 1];	/* highscore's name */
-	uint32_t	score;			/* score */
-	time_t		time;			/* when? */
-	uint8_t		wc;			/* wallcrossing or not */
+    char name[NAMELEN + 1]; /* highscore's name */
+    uint32_t score;         /* score */
+    time_t time;            /* when? */
+    uint8_t wc;             /* wallcrossing or not */
 };
 
 #if !defined(HAVE_ERR)
@@ -100,28 +100,28 @@ struct score {
 static void
 err(int code, const char *fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-	va_start(ap, fmt);
-	fprintf(stderr, "nsnake: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, ": %s", strerror(errno));
-	va_end(ap);
+    va_start(ap, fmt);
+    fprintf(stderr, "nsnake: ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, ": %s", strerror(errno));
+    va_end(ap);
 
-	exit(code);
+    exit(code);
 }
 
 static void
 errx(int code, const char *fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-	va_start(ap, fmt);
-	fprintf(stderr, "nsnake: ");
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    fprintf(stderr, "nsnake: ");
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
 
-	exit(code);
+    exit(code);
 }
 
 #endif /* _HAVE_ERR */

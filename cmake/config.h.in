@@ -33,10 +33,10 @@
 
 /* Defined in MinGW but not in Visual Studio */
 enum {
-	F_OK = 00,
-	W_OK = 01,
-	R_OK = 04,
-	X_OK = 06
+    F_OK = 00,
+    W_OK = 01,
+    R_OK = 04,
+    X_OK = 06
 };
 
 #endif
