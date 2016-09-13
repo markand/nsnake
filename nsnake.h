@@ -31,7 +31,7 @@
 #if defined(_WIN32)
 #  include <io.h>
 #  include <lmcons.h>
-#  include <Windows.h>
+#  include <windows.h>
 #else
 #  include <sys/types.h>
 #  include <pwd.h>
