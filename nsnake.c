@@ -553,7 +553,10 @@ main(int argc, char *argv[])
                 sn.pos[0].y = HEIGHT - 2;
         }
 
-        nsnake_wait(100);
+        if (sn.diry != 0)
+            nsnake_wait(118);
+        else
+            nsnake_wait(100);
     }
 
     /* The snake is dead. */
