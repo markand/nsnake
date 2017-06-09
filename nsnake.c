@@ -87,7 +87,7 @@ nsnake_init(void)
     }
 
     top = newwin(1, 0, 0, 0);
-    frame   = newwin(HEIGHT, WIDTH, (LINES/2)-(HEIGHT/2), (COLS/2)-(WIDTH/2));
+    frame = newwin(HEIGHT, WIDTH, (LINES/2)-(HEIGHT/2), (COLS/2)-(WIDTH/2));
     box(frame, ACS_VLINE, ACS_HLINE);
 
     if (setcolors) {
@@ -173,8 +173,8 @@ nsnake_spawn(struct food *fd)
     } while (grid[fd->y][fd->x] != GridEmpty);
 
     /* Free food does not grow the snake */
-    num     = ((random() % 7) - 1) + 1;
-    fd->type    = (num == 6) ? FREE : NORM;
+    num = ((random() % 7) - 1) + 1;
+    fd->type = (num == 6) ? FREE : NORM;
 }
 
 static void

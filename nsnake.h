@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _NSNAKE_H_
-#define _NSNAKE_H_
+#ifndef NSNAKE_H
+#define NSNAKE_H
 
 #include <signal.h>
 #include <stdio.h>
@@ -29,23 +29,23 @@
 #include <curses.h>
 
 #if defined(_WIN32)
-#  include <io.h>
-#  include <lmcons.h>
-#  include <windows.h>
+#   include <io.h>
+#   include <lmcons.h>
+#   include <windows.h>
 #else
-#  include <sys/types.h>
-#  include <pwd.h>
+#   include <sys/types.h>
+#   include <pwd.h>
 #endif
 
 #include "config.h"
 
 #if defined(HAVE_ERR)
-#  include <err.h>
+#   include <err.h>
 #endif
 
 #if !defined(HAVE_RANDOM)
-#  define random rand
-#  define srandom srand
+#   define random rand
+#   define srandom srand
 #endif
 
 #define HEIGHT              23
@@ -83,9 +83,9 @@ struct food {
 
 struct score {
 #if defined(_WIN32)
-#  define NAMELEN UNLEN
+#   define NAMELEN UNLEN
 #else
-#  define NAMELEN 32
+#   define NAMELEN 32
 #endif
     char name[NAMELEN + 1]; /* highscore's name */
     uint32_t score;         /* score */
@@ -126,4 +126,4 @@ errx(int code, const char *fmt, ...)
 
 #endif /* _HAVE_ERR */
 
-#endif /* !_NSNAKE_H_ */
+#endif /* !NSNAKE_H */
