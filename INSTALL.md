@@ -27,13 +27,13 @@ Options
 
 The following boolean options are available:
 
-  - **WITH_DOCS**: set to false if you don't want documentation to be installed,
-  - **WITH_MAN**: set to false if you don't want manual pages to be installed.
+- **WITH_DOCS**: set to false if you don't want documentation to be installed,
+- **WITH_MAN**: set to false if you don't want manual pages to be installed.
 
 The following directories may be adjusted:
 
-  - **WITH_DOCDIR**: the directory where to install documentation files,
-  - **WITH_MANDIR**: the root directory where to install manual files.
+- **WITH_DOCDIR**: the directory where to install documentation files,
+- **WITH_MANDIR**: the root directory where to install manual files.
 
 Example:
 
@@ -49,9 +49,9 @@ The directory for saving the scores is writable by this group to make sure the e
 
 You can adjust the user, group and scores directory with the following options:
 
-  - **WITH_USER**: the uid passed in `chown` command,
-  - **WITH_GROUP**: the gid passed in `chown` command,
-  - **WITH_DBDIR**: the directory where to store the scores file.
+- **WITH_USER**: the uid passed in `chown` command,
+- **WITH_GROUP**: the gid passed in `chown` command,
+- **WITH_DBDIR**: the directory where to store the scores file.
 
 Note: these options have no effects on Windows.
 

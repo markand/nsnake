@@ -33,21 +33,21 @@
 
 /* Defined in MinGW but not in Visual Studio */
 enum {
-    F_OK = 00,
-    W_OK = 01,
-    R_OK = 04,
-    X_OK = 06
+	F_OK = 00,
+	W_OK = 01,
+	R_OK = 04,
+	X_OK = 06
 };
 
 #endif
 
 /* getopt(3) */
 #if !defined(HAVE_GETOPT)
-#  include <getopt.h>
+#	include <getopt.h>
 #endif
 
 #if defined(HAVE_UNISTD_H)
-#  include <unistd.h>
+#	include <unistd.h>
 #endif
 
 #define NSNAKE_SCOREFILE "@NSNAKE_SCORESDIR@/scores"

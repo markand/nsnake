@@ -30,9 +30,9 @@ set(NSNAKE_VERSION_PATCH 0)
 set(NSNAKE_VERSION "${NSNAKE_VERSION_MAJOR}.${NSNAKE_VERSION_MINOR}.${NSNAKE_VERSION_PATCH}")
 
 if (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_C_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_C_FLAGS}")
+	set(CMAKE_C_FLAGS "-Wall -Wextra ${CMAKE_C_FLAGS}")
 elseif (MSVC)
-    set(CMAKE_C_FLAGS "/wd4005 /wd4996 /D_CRT_SECURE_NO_WARNINGS ${CMAKE_C_FLAGS}")
+	set(CMAKE_C_FLAGS "/wd4005 /wd4996 /D_CRT_SECURE_NO_WARNINGS ${CMAKE_C_FLAGS}")
 endif ()
 
 include(CheckIncludeFile)
@@ -48,25 +48,25 @@ include(CheckSymbolExists)
 #
 
 if (NOT WIN32)
-    include(cmake/check-games.cmake)
+	include(cmake/check-games.cmake)
 endif ()
 
 if (HAVE_USER_GAMES)
-    set(DEFAULT_USER games)
+	set(DEFAULT_USER games)
 else ()
-    set(DEFAULT_USER nobody)
+	set(DEFAULT_USER nobody)
 endif ()
 
 if (HAVE_GROUP_GAMES)
-    set(DEFAULT_GROUP games)
+	set(DEFAULT_GROUP games)
 else ()
-    set(DEFAULT_GROUP nobody)
+	set(DEFAULT_GROUP nobody)
 endif ()
 
 if (WIN32)
-    set(DEFAULT_MAN Off)
+	set(DEFAULT_MAN Off)
 else ()
-    set(DEFAULT_MAN On)
+	set(DEFAULT_MAN On)
 endif ()
 
 #
@@ -74,32 +74,32 @@ endif ()
 # -------------------------------------------------------------------
 #
 if (WIN32)
-    if (CMAKE_SIZEOF_VOID_P MATCHES 8)
-        set(ARCH amd64)
-    else ()
-        set(ARCH x86)
-    endif ()
+	if (CMAKE_SIZEOF_VOID_P MATCHES 8)
+		set(ARCH amd64)
+	else ()
+		set(ARCH x86)
+	endif ()
 
-    if (MSVC)
-        set(
-            LIBS
-            $<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/lib/pdcurses.lib>
-            $<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/lib/pdcurses.lib>
-        )
+	if (MSVC)
+		set(
+			LIBS
+			$<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/lib/pdcurses.lib>
+			$<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/lib/pdcurses.lib>
+		)
 
-        set(
-            INCLUDES
-            $<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/include>
-            $<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/include>
-        )
-    else ()
-        set(INCLUDES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/include)
-        set(LIBS ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/lib/libpdcurses.a)
-    endif ()
+		set(
+			INCLUDES
+			$<$<CONFIG:Debug>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/debug/libpdcurses/include>
+			$<$<CONFIG:Release>:${nsnake_SOURCE_DIR}/windows/vs/${ARCH}/release/libpdcurses/include>
+		)
+	else ()
+		set(INCLUDES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/include)
+		set(LIBS ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libpdcurses/lib/libpdcurses.a)
+	endif ()
 else ()
-    find_package(Curses REQUIRED)
-    set(INCLUDES ${CURSES_INCLUDE_DIRS})
-    set(LIBS ${CURSES_LIBRARIES})
+	find_package(Curses REQUIRED)
+	set(INCLUDES ${CURSES_INCLUDE_DIRS})
+	set(LIBS ${CURSES_LIBRARIES})
 endif ()
 
 #
@@ -137,47 +137,47 @@ check_function_exists(srandom HAVE_SRANDOM)
 check_symbol_exists(SIGWINCH signal.h HAVE_SIGWINCH)
 
 if (NOT HAVE_ERR_H OR NOT HAVE_ERRX)
-    set(HAVE_ERR FALSE)
+	set(HAVE_ERR FALSE)
 endif ()
 
 if (NOT HAVE_SRANDOM)
-    set(HAVE_RANDOM FALSE)
+	set(HAVE_RANDOM FALSE)
 endif ()
 
 if (NOT HAVE_UNISTD_H)
-    set(HAVE_GETOPT FALSE)
+	set(HAVE_GETOPT FALSE)
 endif ()
 
 if (NOT HAVE_GETOPT)
-    list(
-        APPEND
-        SOURCES
-        ${nsnake_SOURCE_DIR}/extern/getopt.c
-        ${nsnake_SOURCE_DIR}/extern/getopt.h
-    )
+	list(
+		APPEND
+		SOURCES
+		${nsnake_SOURCE_DIR}/extern/getopt.c
+		${nsnake_SOURCE_DIR}/extern/getopt.h
+	)
 endif ()
 
 if (IS_ABSOLUTE ${WITH_DBDIR})
-    set(NSNAKE_SCORESDIR ${WITH_DBDIR})
+	set(NSNAKE_SCORESDIR ${WITH_DBDIR})
 else ()
-    set(NSNAKE_SCORESDIR ${CMAKE_INSTALL_PREFIX}/${WITH_DBDIR})
+	set(NSNAKE_SCORESDIR ${CMAKE_INSTALL_PREFIX}/${WITH_DBDIR})
 endif ()
 
 if (IS_ABSOLUTE ${WITH_MANDIR})
-    set(NSNAKE_MANDIR ${WITH_MANDIR})
+	set(NSNAKE_MANDIR ${WITH_MANDIR})
 else ()
-    set(NSNAKE_MANDIR ${CMAKE_INSTALL_PREFIX}/${WITH_MANDIR})
+	set(NSNAKE_MANDIR ${CMAKE_INSTALL_PREFIX}/${WITH_MANDIR})
 endif ()
 
 if (IS_ABSOLUTE ${WITH_DOCDIR})
-    set(NSNAKE_DOCDIR ${WITH_DOCDIR})
+	set(NSNAKE_DOCDIR ${WITH_DOCDIR})
 else ()
-    set(NSNAKE_DOCDIR ${CMAKE_INSTALL_PREFIX}/${WITH_DOCDIR})
+	set(NSNAKE_DOCDIR ${CMAKE_INSTALL_PREFIX}/${WITH_DOCDIR})
 endif ()
 
 configure_file(
-    ${nsnake_SOURCE_DIR}/cmake/config.h.in
-    ${nsnake_BINARY_DIR}/config.h
+	${nsnake_SOURCE_DIR}/cmake/config.h.in
+	${nsnake_BINARY_DIR}/config.h
 )
 
 #
@@ -195,27 +195,27 @@ target_include_directories(nsnake PRIVATE ${INCLUDES} ${nsnake_BINARY_DIR} ${nsn
 #
 
 configure_file(
-    ${nsnake_SOURCE_DIR}/cmake/post-install.cmake.in
-    ${nsnake_BINARY_DIR}/post-install.cmake
-    @ONLY
+	${nsnake_SOURCE_DIR}/cmake/post-install.cmake.in
+	${nsnake_BINARY_DIR}/post-install.cmake
+	@ONLY
 )
 
 install(TARGETS nsnake DESTINATION bin)
 install(SCRIPT ${nsnake_BINARY_DIR}/post-install.cmake)
 
 if (WITH_MAN)
-    install(FILES nsnake.6 DESTINATION ${WITH_MANDIR}/man6)
+	install(FILES nsnake.6 DESTINATION ${WITH_MANDIR}/man6)
 endif ()
 
 if (WITH_DOCS)
-    install(FILES LICENSE.md DESTINATION ${WITH_DOCDIR})
+	install(FILES LICENSE.md DESTINATION ${WITH_DOCDIR})
 endif ()
 
 if (MINGW)
-    install(
-        FILES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libwinpthread-1.dll
-        DESTINATION bin
-    )
+	install(
+		FILES ${nsnake_SOURCE_DIR}/windows/mingw/${ARCH}/libwinpthread-1.dll
+		DESTINATION bin
+	)
 endif ()
 
 #
@@ -235,36 +235,36 @@ include(CPack)
 #
 
 message("Compiling nsnake with the following flags:")
-message("    General flags:    ${CMAKE_C_FLAGS}")
-message("    Debug flags:      ${CMAKE_C_FLAGS_DEBUG}")
-message("    Release flags:    ${CMAKE_C_FLAGS_RELEASE}")
+message("    General flags:     ${CMAKE_C_FLAGS}")
+message("    Debug flags:       ${CMAKE_C_FLAGS_DEBUG}")
+message("    Release flags:     ${CMAKE_C_FLAGS_RELEASE}")
 message("")
 
 message("Building nsnake with the following options:")
 
 if (NOT WIN32)
-    message("    User (uid):       ${WITH_USER}")
-    message("    Groupe (gid):     ${WITH_GROUP}")
+	message("    User (uid):        ${WITH_USER}")
+	message("    Groupe (gid):      ${WITH_GROUP}")
 endif ()
 
 if (WITH_MAN)
-    set(WITH_MAN_MSG "Yes")
+	set(WITH_MAN_MSG "Yes")
 else ()
-    set(WITH_MAN_MSG "No")
+	set(WITH_MAN_MSG "No")
 endif ()
 
 if (WITH_DOCS)
-    set(WITH_DOCS_MSG "Yes")
+	set(WITH_DOCS_MSG "Yes")
 else ()
-    set(WITH_DOCS_MSG "No")
+	set(WITH_DOCS_MSG "No")
 endif ()
 
-message("    Installing man:   ${WITH_MAN_MSG}")
-message("    Installing docs:  ${WITH_DOCS_MSG}")
+message("    Installing man:    ${WITH_MAN_MSG}")
+message("    Installing docs:   ${WITH_DOCS_MSG}")
 message("")
 
 message("Installing nsnake in the following directories:")
-message("    Documentation:    ${NSNAKE_DOCDIR}")
-message("    Manuals:          ${NSNAKE_MANDIR}")
-message("    Scores directory: ${NSNAKE_SCORESDIR}")
+message("    Documentation:     ${NSNAKE_DOCDIR}")
+message("    Manuals:           ${NSNAKE_MANDIR}")
+message("    Scores directory:  ${NSNAKE_SCORESDIR}")
 message("")
