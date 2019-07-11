@@ -1,7 +1,7 @@
 /*
  * nsnake.h -- a snake game for your terminal
  *
- * Copyright (c) 2011-2018 David Demelier <markand@malikania.fr>
+ * Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
