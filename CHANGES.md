@@ -1,6 +1,13 @@
 NSnake CHANGES
 ==============
 
+nsnake current
+-----------------------
+
+- Switch back to plain Makefiles,
+- Removing bundled libraries,
+- Do almost all platform detection in nsnake.h.
+
 nsnake 2.0.0 2016-02-26
 -----------------------
 
