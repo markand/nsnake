@@ -51,3 +51,5 @@ uninstall:
 
 clean:
 	rm -f ${OBJS} nsnake
+
+.PHONY: all clean install uninstall
