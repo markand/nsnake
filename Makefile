@@ -38,7 +38,7 @@ all: nsnake
 ${OBJS}: nsnake.h
 
 nsnake: ${OBJS}
-	${CC} -o $@ ${LDFLAGS} $<
+	${CC} -o $@ ${LDFLAGS} ${OBJS}
 
 install: nsnake
 	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
