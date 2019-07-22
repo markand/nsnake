@@ -18,19 +18,19 @@
 
 #include "nsnake.h"
 
-#define NSNAKE_HEIGHT          23
-#define NSNAKE_WIDTH           78
-#define NSNAKE_SIZE            ((NSNAKE_HEIGHT - 2) * (NSNAKE_WIDTH - 2))
-#define NSNAKE_DATABASE VARDIR "/nsnake/scores"
+#define HEIGHT          23
+#define WIDTH           78
+#define SIZE            ((HEIGHT - 2) * (WIDTH - 2))
+#define DATABASE        VARDIR "/nsnake/scores"
 
-enum nsnake_grid {
+enum grid {
 	GRID_EMPTY,
 	GRID_WALL,
 	GRID_SNAKE,
 	GRID_FOOD
 };
 
-struct nsnake_snake {
+struct snake {
 	uint32_t score;         /* user score */
 	uint16_t length;        /* snake's size */
 	int8_t dirx;            /* direction in x could be 0, 1 or -1 */
@@ -39,10 +39,10 @@ struct nsnake_snake {
 	struct {
 		uint8_t x;      /* each snake part has (x, y) position */
 		uint8_t y;      /* each part will be displayed */
-	} pos[NSNAKE_SIZE];
+	} pos[SIZE];
 };
 
-struct nsnake_food {
+struct food {
 	enum {
 		NORM = 0,       /* both increase the score but only NORM */
 		FREE            /* increase the snake's length too */
@@ -52,7 +52,7 @@ struct nsnake_food {
 	uint8_t y;              /* in grid[][]. */
 };
 
-struct nsnake_score {
+struct score {
 #if defined(_WIN32)
 #	define NAMELEN UNLEN
 #else
@@ -70,26 +70,26 @@ static int color = 2;           /* green color by default */
 static int noscore = 0;         /* do not score */
 static int verbose = 0;         /* be verbose */
 
-static uint8_t grid[NSNAKE_HEIGHT][NSNAKE_WIDTH] = {{ GRID_EMPTY }};
+static uint8_t grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
 static WINDOW *top = NULL;
 static WINDOW *frame = NULL;
 
 static void
-nsnake_wset(WINDOW *frame, int pair)
+wset(WINDOW *frame, int pair)
 {
 	if (setcolors)
 		wattron(frame, pair);
 }
 
 static void
-nsnake_wunset(WINDOW *frame, int pair)
+wunset(WINDOW *frame, int pair)
 {
 	if (setcolors)
 		wattroff(frame, pair);
 }
 
 static void
-nsnake_refresh(void)
+repaint(void)
 {
 	refresh();
 	wrefresh(top);
@@ -97,16 +97,15 @@ nsnake_refresh(void)
 }
 
 static int
-nsnake_init(void)
+init(void)
 {
-	/* Ncurses init */
 	initscr();
 	noecho();
 	curs_set(0);
 	keypad(stdscr, TRUE);
 	nodelay(stdscr, TRUE);
 
-	if (COLS < (NSNAKE_WIDTH + 1) || LINES < (NSNAKE_HEIGHT + 1))
+	if (COLS < (WIDTH + 1) || LINES < (HEIGHT + 1))
 		return -1;
 
 	if (color < 0 || color > 8)
@@ -128,7 +127,7 @@ nsnake_init(void)
 	}
 
 	top = newwin(1, 0, 0, 0);
-	frame = newwin(NSNAKE_HEIGHT, NSNAKE_WIDTH, (LINES/2)-(NSNAKE_HEIGHT/2), (COLS/2)-(NSNAKE_WIDTH/2));
+	frame = newwin(HEIGHT, WIDTH, (LINES/2)-(HEIGHT/2), (COLS/2)-(WIDTH/2));
 	box(frame, ACS_VLINE, ACS_HLINE);
 
 	if (setcolors) {
@@ -136,13 +135,13 @@ nsnake_init(void)
 		wattrset(top, COLOR_PAIR(0) | A_BOLD);
 	}
 
-	nsnake_refresh();
+	repaint();
 
 	return 1;
 }
 
 static void
-nsnake_set_grid(struct nsnake_snake *sn)
+set_grid(struct snake *sn)
 {
 	uint16_t i;
 
@@ -158,59 +157,59 @@ nsnake_set_grid(struct nsnake_snake *sn)
 }
 
 static void
-nsnake_draw(const struct nsnake_snake *sn, const struct nsnake_food *fd)
+draw(const struct snake *sn, const struct food *fd)
 {
 	uint16_t i;
 
 	for (i = 0; i < sn->length; ++i) {
-		nsnake_wset(frame, COLOR_PAIR(color));
+		wset(frame, COLOR_PAIR(color));
 		mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, '#');
-		nsnake_wunset(frame, COLOR_PAIR(color));
+		wunset(frame, COLOR_PAIR(color));
 	}
 
 	/* Print head */
-	nsnake_wset(frame, COLOR_PAIR(color) | A_BOLD);
+	wset(frame, COLOR_PAIR(color) | A_BOLD);
 	mvwaddch(frame, sn->pos[0].y, sn->pos[0].x, '@');
-	nsnake_wunset(frame, COLOR_PAIR(color) | A_BOLD);
+	wunset(frame, COLOR_PAIR(color) | A_BOLD);
 
 	/* Erase the snake's tail */
 	mvwaddch(frame, sn->pos[sn->length].y, sn->pos[sn->length].x, ' ');
 
 	/* Print food */
-	nsnake_wset(frame, COLOR_PAIR(1) | A_BOLD);
+	wset(frame, COLOR_PAIR(1) | A_BOLD);
 	mvwaddch(frame, fd->y, fd->x, (fd->type == FREE) ? '*' : '+');
-	nsnake_wunset(frame, COLOR_PAIR(1) | A_BOLD);
+	wunset(frame, COLOR_PAIR(1) | A_BOLD);
 
 	/* Print score */
 	wmove(top, 0, 0);
 	wprintw(top, "Score: %d", sn->score);
-	nsnake_refresh();
+	repaint();
 }
 
 static int
-nsnake_is_dead(const struct nsnake_snake *sn)
+is_dead(const struct snake *sn)
 {
 	if (grid[sn->pos[0].y][sn->pos[0].x] == GRID_SNAKE)
 		return 1;
 
 	/* No warp enabled means dead in wall */
-	return (!warp && grid[sn->pos[0].y][sn->pos[0].x] == GRID_WALL);
+	return !warp && grid[sn->pos[0].y][sn->pos[0].x] == GRID_WALL;
 }
 
 static int
-nsnake_is_eaten(const struct nsnake_snake *sn)
+is_eaten(const struct snake *sn)
 {
 	return grid[sn->pos[0].y][sn->pos[0].x] == GRID_FOOD;
 }
 
 static void
-nsnake_spawn(struct nsnake_food *fd)
+spawn(struct food *fd)
 {
 	int num;
 
 	do {
-		fd->x = (random() % (NSNAKE_WIDTH - 2)) + 1;
-		fd->y = (random() % (NSNAKE_HEIGHT - 2)) + 1;
+		fd->x = (random() % (WIDTH - 2)) + 1;
+		fd->y = (random() % (HEIGHT - 2)) + 1;
 	} while (grid[fd->y][fd->x] != GRID_EMPTY);
 
 	/* Free food does not grow the snake */
@@ -219,7 +218,7 @@ nsnake_spawn(struct nsnake_food *fd)
 }
 
 static void
-nsnake_direction(struct nsnake_snake *sn, int ch)
+direction(struct snake *sn, int ch)
 {
 	switch (ch) {
 	case KEY_LEFT: case 'h': case 'H':
@@ -256,13 +255,13 @@ nsnake_direction(struct nsnake_snake *sn, int ch)
 }
 
 static int
-nsnake_init_score(const struct nsnake_score *sc)
+init_score(const struct score *sc)
 {
 	FILE *fp;
 	char header[12] = "nsnake-score";
 	uint32_t nscore = 1;
 
-	if (!(fp = fopen(NSNAKE_DATABASE, "w+b")))
+	if (!(fp = fopen(DATABASE, "w+b")))
 		return 0;
 
 	fwrite(header, sizeof (header), 1, fp);
@@ -274,14 +273,14 @@ nsnake_init_score(const struct nsnake_score *sc)
 }
 
 static int
-nsnake_insert_score(const struct nsnake_score *sc)
+insert_score(const struct score *sc)
 {
 	FILE *fp;
 	uint32_t nscore, i;
 	char header[12] = { 0 };
-	struct nsnake_score *buffer;
+	struct score *buffer;
 
-	if (!(fp = fopen(NSNAKE_DATABASE, "r+b")))
+	if (!(fp = fopen(DATABASE, "r+b")))
 		return 0;
 
 	fread(header, sizeof (header), 1, fp);
@@ -326,11 +325,11 @@ nsnake_insert_score(const struct nsnake_score *sc)
 }
 
 static int
-nsnake_register_score(const struct nsnake_snake *sn)
+register_score(const struct snake *sn)
 {
-	struct nsnake_score sc;
+	struct score sc;
 	struct stat st;
-	int (*reshandler)(const struct nsnake_score *);
+	int (*reshandler)(const struct score *);
 
 	memset(&sc, 0, sizeof (sc));
 
@@ -344,24 +343,24 @@ nsnake_register_score(const struct nsnake_snake *sn)
 	sc.time = time(NULL);
 	sc.wc = warp;
 
-	if (stat(NSNAKE_DATABASE, &st) < 0 || st.st_size == 0)
-		reshandler = &(nsnake_init_score);
+	if (stat(DATABASE, &st) < 0 || st.st_size == 0)
+		reshandler = &(init_score);
 	else
-		reshandler = &(nsnake_insert_score);
+		reshandler = &(insert_score);
 
 	return reshandler(&sc);
 }
 
-void
-nsnake_show_scores(void)
+static void
+show_scores(void)
 {
 	FILE *fp;
 	uint32_t nscore, i;
 	char header[12] = { 0 };
-	struct nsnake_score sc;
+	struct score sc;
 
-	if (!(fp = fopen(NSNAKE_DATABASE, "rb")))
-		err(1, "Could not read %s", NSNAKE_DATABASE);
+	if (!(fp = fopen(DATABASE, "rb")))
+		err(1, "Could not read %s", DATABASE);
 
 	if (verbose)
 		printf("Wall crossing %s\n", (warp) ? "enabled" : "disabled");
@@ -387,8 +386,8 @@ nsnake_show_scores(void)
 	exit(0);
 }
 
-void
-nsnake_wait(unsigned ms)
+static void
+wait(unsigned ms)
 {
 #if defined(_WIN32)
 	Sleep(ms);
@@ -398,15 +397,15 @@ nsnake_wait(unsigned ms)
 }
 
 static void
-nsnake_quit(const struct nsnake_snake *sn)
+quit(const struct snake *sn)
 {
 	uint16_t i;
 
 	if (sn != NULL) {
 		for (i = 0; i < sn->length; ++i) {
 			mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
-			nsnake_wait(50);
-			nsnake_refresh();
+			wait(50);
+			repaint();
 		}
 	}
 
@@ -418,8 +417,8 @@ nsnake_quit(const struct nsnake_snake *sn)
 
 #if defined(HAVE_SIGWINCH)
 
-void
-nsnake_resize_handler(int signal)
+static void
+resize_handler(int signal)
 {
 	int x, y;
 
@@ -429,32 +428,32 @@ nsnake_resize_handler(int signal)
 	/* XXX: I would like to pause the game until the terminal is resized */
 	endwin();
 
-#if defined(HAVE_RENSNAKE_SIZETERM)
+#if defined(HAVE_RESIZETERM)
 	resizeterm(LINES, COLS);
 #endif
-#if defined(HAVE_RENSNAKE_SIZE_TERM)
+#if defined(HAVE_RESIZE_TERM)
 	resize_term(LINES, COLS);
 #endif
-	refresh(); clear();
+	repaint(); clear();
 
 	/* Color the top bar */
 	wbkgd(top, COLOR_PAIR(0) | A_BOLD);
 
 	getmaxyx(stdscr, y, x);
 
-	if (x < NSNAKE_WIDTH || y < NSNAKE_HEIGHT) {
-		nsnake_quit(NULL);
+	if (x < WIDTH || y < HEIGHT) {
+		quit(NULL);
 		errx(1, "Terminal has been resized too small, aborting");
 	}
 
-	mvwin(frame, (y / 2) - (NSNAKE_HEIGHT / 2), (x / 2) - (NSNAKE_WIDTH / 2));
-	nsnake_refresh();
+	mvwin(frame, (y / 2) - (HEIGHT / 2), (x / 2) - (WIDTH / 2));
+	repaint();
 }
 
 #endif
 
 static void
-nsnake_usage(void)
+usage(void)
 {
 	fprintf(stderr, "usage: nsnake [-cnsvw] [-C color]\n");
 	exit(1);
@@ -467,43 +466,52 @@ main(int argc, char *argv[])
 	int x, y, ch;
 	int showscore = 0;
 
-	struct nsnake_snake sn = { 0, 4, 1, 0, {
+	struct snake sn = { 0, 4, 1, 0, {
 		{5, 10}, {5, 9}, {5, 8}, {5, 7} }
 	};
 
-	struct nsnake_food fd = { NORM, 0, 0 };
+	struct food fd = { NORM, 0, 0 };
 
-	/* Process options */
 	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
 		switch (ch) {
-		case 'c': setcolors = 0;	break;
-		case 'C': color = atoi(optarg); break;
-		case 'n': noscore = 1;	  break;
-		case 's': showscore = 1;	break;
-		case 'v': verbose = 1;	  break;
-		case 'w': warp = 0;	 break;
-		case '?':
-		default :
-			nsnake_usage();
+		case 'c':
+			setcolors = 0;
+			break;
+		case 'C':
+			color = atoi(optarg);
+			break;
+		case 'n':
+			noscore = 1;
+			break;
+		case 's':
+			showscore = 1;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
+		case 'w':
+			warp = 0;
+			break;
+		default:
+			usage();
 			/* NOTREACHED */
 		}
 	}
 
 	if (showscore)
-		nsnake_show_scores();
+		show_scores();
 
 	argc -= optind;
 	argv += optind;
 
-	/* Game init */
 	srandom((unsigned)time(NULL));
 
 #if defined(HAVE_SIGWINCH)
-	signal(SIGWINCH, nsnake_resize_handler);
+	signal(SIGWINCH, resize_handler);
 #endif
 
-	if (!nsnake_init()) {
-		nsnake_quit(NULL);
+	if (!init()) {
+		quit(NULL);
 		errx(1, "Terminal too small, aborting");
 	}
 		
@@ -513,25 +521,25 @@ main(int argc, char *argv[])
 	}
 
 	/* Apply GRID_WALL to the edges */
-	for (y = 0; y < NSNAKE_HEIGHT; ++y)
-		grid[y][0] = grid[y][NSNAKE_WIDTH - 1] = GRID_WALL;
-	for (x = 0; x < NSNAKE_WIDTH; ++x)
-		grid[0][x] = grid[NSNAKE_HEIGHT - 1][x] = GRID_WALL;
+	for (y = 0; y < HEIGHT; ++y)
+		grid[y][0] = grid[y][WIDTH - 1] = GRID_WALL;
+	for (x = 0; x < WIDTH; ++x)
+		grid[0][x] = grid[HEIGHT - 1][x] = GRID_WALL;
 
 	/* Do not spawn food on snake */
-	nsnake_set_grid(&sn);
-	nsnake_spawn(&fd);
+	set_grid(&sn);
+	spawn(&fd);
 
 	/* Apply food on the grid */
 	grid[fd.y][fd.x] = GRID_FOOD;
-	nsnake_draw(&sn, &fd);
+	draw(&sn, &fd);
 
 	/* First direction is to right */
 	sn.pos[0].x += sn.dirx;
 
 	running = 1;
-	while (!nsnake_is_dead(&sn) && running) {
-		if (nsnake_is_eaten(&sn)) {
+	while (!is_dead(&sn) && running) {
+		if (is_eaten(&sn)) {
 			int i;
 
 			if (fd.type == NORM)
@@ -541,9 +549,9 @@ main(int argc, char *argv[])
 				grid[sn.pos[i].y][sn.pos[i].x] = GRID_SNAKE;
 
 			/* If the screen is totally filled */
-			if (sn.length >= NSNAKE_SIZE) {
+			if (sn.length >= SIZE) {
 				/* Emulate new game */
-				for (i = 4; i < NSNAKE_SIZE; ++i) {
+				for (i = 4; i < SIZE; ++i) {
 					mvwaddch(frame, sn.pos[i].y, sn.pos[i].x, ' ');
 					grid[sn.pos[i].y][sn.pos[i].x] = GRID_EMPTY;
 				}
@@ -552,18 +560,18 @@ main(int argc, char *argv[])
 			}
 
 			if (fd.type == NORM)
-				nsnake_set_grid(&sn);
+				set_grid(&sn);
 
 			/* Prevent food spawning on snake's tail */
-			nsnake_spawn(&fd);
+			spawn(&fd);
 
 			sn.score += 1;
 			grid[fd.y][fd.x] = GRID_FOOD;
 		}
 
 		/* Draw and define grid with snake parts */
-		nsnake_draw(&sn, &fd);
-		nsnake_set_grid(&sn);
+		draw(&sn, &fd);
+		set_grid(&sn);
 
 		/* Go to the next position */
 		sn.pos[0].x += sn.dirx;
@@ -584,35 +592,34 @@ main(int argc, char *argv[])
 		else if (ch == 'c')
 			color = (color + 1) % 8;
 		else if (ch)
-			nsnake_direction(&sn, ch);
+			direction(&sn, ch);
 
 		/* If warp enabled, touching wall cross to the opposite */
 		if (warp) {
-			if (sn.pos[0].x == NSNAKE_WIDTH - 1)
+			if (sn.pos[0].x == WIDTH - 1)
 				sn.pos[0].x = 1;
 			else if (sn.pos[0].x == 0)
-				sn.pos[0].x = NSNAKE_WIDTH - 2;
-			else if (sn.pos[0].y == NSNAKE_HEIGHT - 1)
+				sn.pos[0].x = WIDTH - 2;
+			else if (sn.pos[0].y == HEIGHT - 1)
 				sn.pos[0].y = 1;
 			else if (sn.pos[0].y == 0)
-				sn.pos[0].y = NSNAKE_HEIGHT - 2;
+				sn.pos[0].y = HEIGHT - 2;
 		}
 
 		if (sn.diry != 0)
-			nsnake_wait(118);
+			wait(118);
 		else
-			nsnake_wait(100);
+			wait(100);
 	}
 
 	/* The snake is dead. */
-	nsnake_quit(&sn);
+	quit(&sn);
 
 	/* User has left or is he dead? */
-	printf("%sScore: %d\n", (grid[sn.pos[0].y][sn.pos[0].x] != GRID_EMPTY) ?
-		"You died...\n" : "", sn.score);
+	printf("%sScore: %d\n", is_dead(&sn) ? "You died...\n" : "", sn.score);
 
-	if (!noscore && !nsnake_register_score(&sn))
-		err(1, "Could not write score file %s", NSNAKE_DATABASE);
+	if (!noscore && !register_score(&sn))
+		err(1, "Could not write score file %s", DATABASE);
 
 	return 0;
 }
