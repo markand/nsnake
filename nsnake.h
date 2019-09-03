@@ -33,10 +33,6 @@
 #	include <unistd.h>
 #	include <sys/types.h>
 #	include <pwd.h>
-
-#	define HAVE_ERR
-#	define HAVE_GETOPT
-#	define HAVE_RANDOM
 #else
 #	include <io.h>
 #	include <lmcons.h>

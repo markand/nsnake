@@ -1,7 +1,7 @@
 NSnake INSTALL
 ==============
 
-To build nsnake, you need a C compiler, [CMake][] and the curses library.
+To build nsnake, you need a C compiler and ncurses.
 
 Note for Windows
 ----------------
@@ -12,7 +12,7 @@ you can use [pdcurses][] which is the implementation known to work with NSnake.
 Build
 -----
 
-Go to the source directory and type the following commands
+Go to the source directory and type the following commands:
 
     make
     make install
@@ -29,6 +29,9 @@ The following options may be used to configure the build.
 - `MANDIR`: change to the manual page location (default: PREFIX/share/man),
 - `VARDIR`: change the score file database directory (default: PREFIX/var/db).
 
+Also, edit config.mk file to adjust NSnake to your system otherwise fallback
+implementations will be bundled in.
+
 Scores file
 -----------
 
@@ -40,5 +43,4 @@ automatically done as `make install` step.
 The directory for saving the scores is writable by this group to make sure the
 executable can write it from any user.
 
-
-[CMake]: http://cmake.org
+[pdcurses]: https://pdcurses.org

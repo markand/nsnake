@@ -21,7 +21,7 @@
 #define HEIGHT          23
 #define WIDTH           78
 #define SIZE            ((HEIGHT - 2) * (WIDTH - 2))
-#define DATABASE        VARDIR "/nsnake/scores"
+#define DATABASE        VARDIR "/db/nsnake/scores"
 
 enum grid {
 	GRID_EMPTY,

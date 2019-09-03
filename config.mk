@@ -1,5 +1,5 @@
 #
-# Makefile -- NSnake makefile
+# config.mk -- NSnake configuration
 #
 # Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
 #
@@ -16,31 +16,29 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-include config.mk
+# Build options.
+CC?=            cc
+CFLAGS?=        -Wall -Wextra -pedantic
+LDFLAGS?=
+LIBS?=          -lncurses
+GID?=           games
+UID?=           games
 
-SRCS=   nsnake.c
-OBJS=   ${SRCS:.c=.o}
+# Installation options.
+PREFIX?=        /usr/local
+BINDIR?=        ${PREFIX}/bin
+MANDIR?=        ${PREFIX}/share/man
+VARDIR?=        ${PREFIX}/var
 
-all: nsnake
+# Portability options, adjust to your system.
+#
+# Uncomment if you have err(3) functions.
+# HAVE_ERR=             -DHAVE_ERR
+#
+# Uncomment if you have random(3) and srandom(3) functions.
+# HAVE_RANDOM=          -DHAVE_RANDOM
+#
+# Uncomment if you have resizeterm(3) in your (n)curses implementation.
+# HAVE_RESIZETERM=      -DHAVE_RESIZETERM
 
-.c.o:
-	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
-
-${OBJS}: nsnake.h
-
-nsnake: ${OBJS}
-	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
-
-install: nsnake
-	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
-	install -Dm0644 nsnake.6 ${DESTDIR}${MANDIR}/man6/nsnake.6
-	install -dm0770 -g ${GID} -o ${UID} ${DESTDIR}${VARDIR}/db/nsnake
-
-uninstall:
-	rm -f ${DESTDIR}${BINDIR}/nsnake
-	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
-
-clean:
-	rm -f ${OBJS} nsnake
-
-.PHONY: all clean install uninstall
+PORTCFLAGS=     ${HAVE_ERR} ${HAVE_RANDOM} ${HAVE_RESIZETERM}
