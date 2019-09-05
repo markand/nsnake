@@ -1,7 +1,7 @@
 #
-# CMakeLists.txt -- CMake build system for nsnake
+# Makefile -- NSnake makefile
 #
-# Copyright (c) 2011-2016 David Demelier <markand@malikania.fr>
+# Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,32 +16,31 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-#
-# Check if 'games' uid/gid is available using getent.
-#
+include config.mk
 
-execute_process(
-	COMMAND getent passwd games
-	RESULT_VARIABLE HAVE_USER_GAMES
-	OUTPUT_QUIET
-	ERROR_QUIET
-)
+SRCS=   nsnake.c
+OBJS=   ${SRCS:.c=.o}
 
-execute_process(
-	COMMAND getent group games
-	RESULT_VARIABLE HAVE_GROUP_GAMES
-	OUTPUT_QUIET
-	ERROR_QUIET
-)
+all: nsnake
 
-if (HAVE_USER_GAMES MATCHES 0)
-	set(HAVE_USER_GAMES TRUE)
-else ()
-	set(HAVE_USER_GAMES FALSE)
-endif ()
+.c.o:
+	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
 
-if (HAVE_GROUP_GAMES MATCHES 0)
-	set(HAVE_GROUP_GAMES TRUE)
-else ()
-	set(HAVE_GROUP_GAMES FALSE)
-endif ()
+${OBJS}: nsnake.h
+
+nsnake: ${OBJS}
+	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
+
+install: nsnake
+	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
+	install -Dm0644 nsnake.6 ${DESTDIR}${MANDIR}/man6/nsnake.6
+	install -dm0770 -g ${GID} -o ${UID} ${DESTDIR}${VARDIR}/db/nsnake
+
+uninstall:
+	rm -f ${DESTDIR}${BINDIR}/nsnake
+	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
+
+clean:
+	rm -f ${OBJS} nsnake
+
+.PHONY: all clean install uninstall

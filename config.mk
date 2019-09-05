@@ -1,0 +1,44 @@
+#
+# config.mk -- NSnake configuration
+#
+# Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+
+# Build options.
+CC?=            cc
+CFLAGS?=        -Wall -Wextra -pedantic
+LDFLAGS?=
+LIBS?=          -lncurses
+GID?=           games
+UID?=           games
+
+# Installation options.
+PREFIX?=        /usr/local
+BINDIR?=        ${PREFIX}/bin
+MANDIR?=        ${PREFIX}/share/man
+VARDIR?=        ${PREFIX}/var
+
+# Portability options, adjust to your system.
+#
+# Uncomment if you have err(3) functions.
+# HAVE_ERR=             -DHAVE_ERR
+#
+# Uncomment if you have random(3) and srandom(3) functions.
+# HAVE_RANDOM=          -DHAVE_RANDOM
+#
+# Uncomment if you have resizeterm(3) in your (n)curses implementation.
+# HAVE_RESIZETERM=      -DHAVE_RESIZETERM
+
+PORTCFLAGS=     ${HAVE_ERR} ${HAVE_RANDOM} ${HAVE_RESIZETERM}

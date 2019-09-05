@@ -1,62 +1,46 @@
 NSnake INSTALL
 ==============
 
-To build nsnake, you need a C compiler, [CMake][] and the curses library.
+To build nsnake, you need a C compiler and ncurses.
 
 Note for Windows
 ----------------
 
-NSnake has been ported to Windows using pdcurses, it is bundled with nsnake and does not need to be installed
-separately.
+NSnake works on Windows but it does not have a native curses library, however
+you can use [pdcurses][] which is the implementation known to work with NSnake.
 
 Build
 -----
 
-Go to the source directory and type the following commands
+Go to the source directory and type the following commands:
 
-    mkdir _build_
-    cd _build_
-    cmake .. -DCMAKE_BUILD_TYPE=Release
     make
     make install
 
-See the CMake documentation for other generators.
+Build configuration
+-------------------
 
-Options
--------
+The following options may be used to configure the build.
 
-The following boolean options are available:
+- `GID`: change the gid to chown (default: games),
+- `UID`: change the uid to chown (default: games),
+- `PREFIX`: root directory for installation
+- `BINDIR`: change to the installation of executable (default: PREFIX/bin),
+- `MANDIR`: change to the manual page location (default: PREFIX/share/man),
+- `VARDIR`: change the score file database directory (default: PREFIX/var/db).
 
-  - **WITH_DOCS**: set to false if you don't want documentation to be installed,
-  - **WITH_MAN**: set to false if you don't want manual pages to be installed.
-
-The following directories may be adjusted:
-
-  - **WITH_DOCDIR**: the directory where to install documentation files,
-  - **WITH_MANDIR**: the root directory where to install manual files.
-
-Example:
-
-    cmake .. -DWITH_DOCS=Off -DWITH_MANDIR=man
+Also, edit config.mk file to adjust NSnake to your system otherwise fallback
+implementations will be bundled in.
 
 Scores file
 -----------
 
-NSnake uses a scores file in order to share all users scores on the same machine. In order to work, nsnake is
-installed with setgid bit set and **games** as user and group.
+NSnake uses a scores file in order to share all users scores on the same
+machine. In order to work, the binary `nsnake` but have setgid file attribute
+and its database directory with the appropriate permissions. This is
+automatically done as `make install` step.
 
-The directory for saving the scores is writable by this group to make sure the executable can write it from any user.
+The directory for saving the scores is writable by this group to make sure the
+executable can write it from any user.
 
-You can adjust the user, group and scores directory with the following options:
-
-  - **WITH_USER**: the uid passed in `chown` command,
-  - **WITH_GROUP**: the gid passed in `chown` command,
-  - **WITH_DBDIR**: the directory where to store the scores file.
-
-Note: these options have no effects on Windows.
-
-Example:
-
-    cmake .. -DWITH_USER=nobody -DWITH_GROUP=nobody -DWITH_DBDIR=/var/cache/nsnake
-
-[CMake]: http://cmake.org
+[pdcurses]: https://pdcurses.org

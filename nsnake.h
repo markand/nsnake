@@ -1,7 +1,7 @@
 /*
  * nsnake.h -- a snake game for your terminal
  *
- * Copyright (c) 2011-2016 David Demelier <markand@malikania.fr>
+ * Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _NSNAKE_H_
-#define _NSNAKE_H_
+#ifndef NSNAKE_H
+#define NSNAKE_H
 
+#include <sys/stat.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,102 +29,33 @@
 
 #include <curses.h>
 
-#if defined(_WIN32)
-#  include <io.h>
-#  include <lmcons.h>
-#  include <Windows.h>
+#if !defined(_WIN32)
+#	include <unistd.h>
+#	include <sys/types.h>
+#	include <pwd.h>
 #else
-#  include <sys/types.h>
-#  include <pwd.h>
+#	include <io.h>
+#	include <lmcons.h>
+#	include <windows.h>
 #endif
 
-#include "config.h"
-
-#if defined(HAVE_ERR)
-#  include <err.h>
+#if NCURSES_EXT_FUNCS > 20141206
+#	define HAVE_RESIZETERM
 #endif
 
 #if !defined(HAVE_RANDOM)
-#  define random rand
-#  define srandom srand
+#	define random rand
+#	define srandom srand
 #endif
 
-#define	HEIGHT		23
-#define WIDTH		78
-#define SIZE		((HEIGHT - 2) * (WIDTH - 2))
-
-enum Grid {
-	GridEmpty,
-	GridWall,
-	GridSnake,
-	GridFood
-};
-
-struct snake {
-	uint32_t	score;		/* user score */
-	uint16_t	length;		/* snake's size */
-	int8_t		dirx;		/* direction in x could be 0, 1 or -1 */
-	int8_t		diry;		/* same for y */
-
-	struct {
-		uint8_t x;		/* each snake part has (x, y) position */
-		uint8_t y;		/* each part will be displayed */
-	} pos[SIZE];
-};
-
-struct food {
-	enum {
-		NORM = 0,		/* both increase the score but only NORM */
-		FREE			/* increase the snake's length too */
-	} type;
-
-	uint8_t x;			/* Position of the current food, will be used */
-	uint8_t y;			/* in grid[][]. */
-};
-
-struct score {
-#if defined(_WIN32)
-#  define NAMELEN UNLEN
+#if defined(HAVE_ERR)
+#	include <err.h>
 #else
-#  define NAMELEN 32
+#	include "extern/err.c"
 #endif
-	char		name[NAMELEN + 1];	/* highscore's name */
-	uint32_t	score;			/* score */
-	time_t		time;			/* when? */
-	uint8_t		wc;			/* wallcrossing or not */
-};
 
-#if !defined(HAVE_ERR)
+#if !defined(HAVE_GETOPT)
+#	include "extern/getopt.c"
+#endif
 
-#include <errno.h>
-
-static void
-err(int code, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	fprintf(stderr, "nsnake: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, ": %s", strerror(errno));
-	va_end(ap);
-
-	exit(code);
-}
-
-static void
-errx(int code, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	fprintf(stderr, "nsnake: ");
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-	exit(code);
-}
-
-#endif /* _HAVE_ERR */
-
-#endif /* !_NSNAKE_H_ */
+#endif /* !NSNAKE_H */
