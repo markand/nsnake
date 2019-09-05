@@ -1,7 +1,7 @@
 NSnake CHANGES
 ==============
 
-nsnake current
+nsnake 2.1.0 2019-09-05
 -----------------------
 
 - Switch back to plain Makefiles,
@@ -26,7 +26,7 @@ nsnake 1.4.0 2012-01-12
 nsnake 1.3.0 2011-08-28
 -----------------------
 
-- Fix a security when reading a bad (or unexistant) file,
+- Fix a security when reading a bad (or nonexistent) file,
 - Do not append the same score twice,
 - Fix a failure when a food is near the wall and the snake wallcrosses,
 - Added an option to disable scoring.
