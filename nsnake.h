@@ -39,9 +39,7 @@
 #	include <windows.h>
 #endif
 
-#if NCURSES_EXT_FUNCS > 20141206
-#	define HAVE_RESIZETERM
-#endif
+#include "sysconfig.h"
 
 #if !defined(HAVE_RANDOM)
 #	define random rand

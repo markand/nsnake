@@ -26,7 +26,10 @@ all: nsnake
 .c.o:
 	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
 
-${OBJS}: nsnake.h
+${OBJS}: sysconfig.h nsnake.h
+
+sysconfig.h: sysconfig.sh
+	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" LIBS="${LIBS}" ./sysconfig.sh > $@
 
 nsnake: ${OBJS}
 	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
@@ -41,6 +44,6 @@ uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
 
 clean:
-	rm -f ${OBJS} nsnake
+	rm -f ${OBJS} nsnake sysconfig.h
 
 .PHONY: all clean install uninstall

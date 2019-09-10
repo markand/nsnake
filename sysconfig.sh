@@ -1,5 +1,6 @@
+#!/bin/sh
 #
-# config.mk -- NSnake configuration
+# sysconfig.sh -- automatically configure portability checks
 #
 # Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
 #
@@ -16,16 +17,56 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-# Build options.
-CC?=            cc
-CFLAGS?=        -Wall -Wextra -pedantic
-LDFLAGS?=
-LIBS?=          -lncurses
-GID?=           games
-UID?=           games
+# Define CC, CFLAGS, LDFLAGS, LIBS before calling this script.
 
-# Installation options.
-PREFIX?=        /usr/local
-BINDIR?=        ${PREFIX}/bin
-MANDIR?=        ${PREFIX}/share/man
-VARDIR?=        ${PREFIX}/var
+compile()
+{
+	$CC $CFLAGS -x "c" - -o test.o $LDFLAGS $LIBS > /dev/null 2>&1 && echo $1
+	rm -f test.o
+}
+
+# resizeterm(3) (ncurses function)
+cat << EOF | compile "#define HAVE_RESIZETERM"
+#include <curses.h>
+
+int
+main(void)
+{
+	resizeterm(0, 0);
+}
+EOF
+
+# random/srandom.
+cat << EOF | compile "#define HAVE_RANDOM"
+#include <stdlib.h>
+
+int
+main(void)
+{
+	srandom(0);
+	random();
+}
+EOF
+
+# err(3) family functions.
+cat << EOF | compile "#define HAVE_ERR"
+#include <err.h>
+
+int
+main(void)
+{
+	err(1, "");
+	errx(1, "");
+}
+EOF
+
+# getopt(3) function.
+cat << EOF | compile "#define HAVE_GETOPT"
+#include <unistd.h>
+
+int
+main(void)
+{
+	getopt(0, 0, 0);
+}
+EOF
