@@ -17,11 +17,11 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-# Define CC, CFLAGS, LDFLAGS, LIBS before calling this script.
+# Define CC, CFLAGS, LDFLAGS before calling this script.
 
 compile()
 {
-	$CC $CFLAGS -x "c" - -o /dev/null $LDFLAGS $LIBS > /dev/null 2>&1 && echo $1
+	$CC $CFLAGS -x "c" - -o /dev/null $LDFLAGS > /dev/null 2>&1 && echo $1
 }
 
 # resizeterm(3) (ncurses function)

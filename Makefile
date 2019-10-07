@@ -16,20 +16,25 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+.POSIX:
+
 include config.mk
 
 SRCS=   nsnake.c
 OBJS=   ${SRCS:.c=.o}
+
+.SUFFIXES:
+.SUFFIXES: .c .o
 
 all: nsnake
 
 .c.o:
 	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
 
-${OBJS}: sysconfig.h nsnake.h
+${OBJS}: config.mk sysconfig.h
 
 sysconfig.h: sysconfig.sh
-	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" LIBS="${LIBS}" ./sysconfig.sh > $@
+	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
 
 nsnake: ${OBJS}
 	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}

@@ -17,15 +17,13 @@
 #
 
 # Build options.
-CC?=            cc
-CFLAGS?=        -Wall -Wextra -pedantic
-LDFLAGS?=
-LIBS?=          -lncurses
-GID?=           games
-UID?=           games
+CFLAGS=         -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
+LDFLAGS=        -lncurses
+GID=            games
+UID=            games
 
 # Installation options.
-PREFIX?=        /usr/local
-BINDIR?=        ${PREFIX}/bin
-MANDIR?=        ${PREFIX}/share/man
-VARDIR?=        ${PREFIX}/var
+PREFIX=         /usr/local
+BINDIR=         ${PREFIX}/bin
+MANDIR=         ${PREFIX}/share/man
+VARDIR=         ${PREFIX}/var
