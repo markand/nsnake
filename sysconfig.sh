@@ -21,8 +21,7 @@
 
 compile()
 {
-	$CC $CFLAGS -x "c" - -o test.o $LDFLAGS $LIBS > /dev/null 2>&1 && echo $1
-	rm -f test.o
+	$CC $CFLAGS -x "c" - -o /dev/null $LDFLAGS $LIBS > /dev/null 2>&1 && echo $1
 }
 
 # resizeterm(3) (ncurses function)
