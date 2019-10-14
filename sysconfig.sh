@@ -1,5 +1,6 @@
+#!/bin/sh
 #
-# Makefile -- NSnake makefile
+# sysconfig.sh -- automatically configure portability checks
 #
 # Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
 #
@@ -16,39 +17,55 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-.POSIX:
+# Define CC, CFLAGS, LDFLAGS before calling this script.
 
-include config.mk
+compile()
+{
+	$CC $CFLAGS -x "c" - -o /dev/null $LDFLAGS > /dev/null 2>&1 && echo $1
+}
 
-SRCS=   nsnake.c
-OBJS=   ${SRCS:.c=.o}
+# resizeterm(3) (ncurses function)
+cat << EOF | compile "#define HAVE_RESIZETERM"
+#include <curses.h>
 
-.SUFFIXES:
-.SUFFIXES: .c .o
+int
+main(void)
+{
+	resizeterm(0, 0);
+}
+EOF
 
-all: nsnake
+# random/srandom.
+cat << EOF | compile "#define HAVE_RANDOM"
+#include <stdlib.h>
 
-.c.o:
-	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
+int
+main(void)
+{
+	srandom(0);
+	random();
+}
+EOF
 
-${OBJS}: config.mk sysconfig.h
+# err(3) family functions.
+cat << EOF | compile "#define HAVE_ERR"
+#include <err.h>
 
-sysconfig.h: sysconfig.sh
-	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
+int
+main(void)
+{
+	err(1, "");
+	errx(1, "");
+}
+EOF
 
-nsnake: ${OBJS}
-	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
+# getopt(3) function.
+cat << EOF | compile "#define HAVE_GETOPT"
+#include <unistd.h>
 
-install: nsnake
-	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
-	install -Dm0644 nsnake.6 ${DESTDIR}${MANDIR}/man6/nsnake.6
-	install -dm0770 -g ${GID} -o ${UID} ${DESTDIR}${VARDIR}/db/nsnake
-
-uninstall:
-	rm -f ${DESTDIR}${BINDIR}/nsnake
-	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
-
-clean:
-	rm -f ${OBJS} nsnake sysconfig.h
-
-.PHONY: all clean install uninstall
+int
+main(void)
+{
+	getopt(0, 0, 0);
+}
+EOF

@@ -16,7 +16,42 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "nsnake.h"
+#include <sys/stat.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+
+#include <curses.h>
+
+#if !defined(_WIN32)
+#	include <unistd.h>
+#	include <sys/types.h>
+#	include <pwd.h>
+#else
+#	include <io.h>
+#	include <lmcons.h>
+#	include <windows.h>
+#endif
+
+#include "sysconfig.h"
+
+#if !defined(HAVE_RANDOM)
+#	define random rand
+#	define srandom srand
+#endif
+
+#if defined(HAVE_ERR)
+#	include <err.h>
+#else
+#	include "extern/err.c"
+#endif
+
+#if !defined(HAVE_GETOPT)
+#	include "extern/getopt.c"
+#endif
 
 #define HEIGHT          23
 #define WIDTH           78
@@ -392,7 +427,12 @@ wait(unsigned ms)
 #if defined(_WIN32)
 	Sleep(ms);
 #else
-	usleep(ms * 1000);
+	struct timespec ts = {
+		.tv_sec = 0,
+		.tv_nsec = ms * 1000000
+	};
+
+	nanosleep(&ts, NULL);
 #endif
 }
 
@@ -430,9 +470,6 @@ resize_handler(int signal)
 
 #if defined(HAVE_RESIZETERM)
 	resizeterm(LINES, COLS);
-#endif
-#if defined(HAVE_RESIZE_TERM)
-	resize_term(LINES, COLS);
 #endif
 	repaint(); clear();
 

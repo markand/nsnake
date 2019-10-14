@@ -17,28 +17,13 @@
 #
 
 # Build options.
-CC?=            cc
-CFLAGS?=        -Wall -Wextra -pedantic
-LDFLAGS?=
-LIBS?=          -lncurses
-GID?=           games
-UID?=           games
+CFLAGS=         -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
+LDFLAGS=        -lncurses
+GID=            games
+UID=            games
 
 # Installation options.
-PREFIX?=        /usr/local
-BINDIR?=        ${PREFIX}/bin
-MANDIR?=        ${PREFIX}/share/man
-VARDIR?=        ${PREFIX}/var
-
-# Portability options, adjust to your system.
-#
-# Uncomment if you have err(3) functions.
-# HAVE_ERR=             -DHAVE_ERR
-#
-# Uncomment if you have random(3) and srandom(3) functions.
-# HAVE_RANDOM=          -DHAVE_RANDOM
-#
-# Uncomment if you have resizeterm(3) in your (n)curses implementation.
-# HAVE_RESIZETERM=      -DHAVE_RESIZETERM
-
-PORTCFLAGS=     ${HAVE_ERR} ${HAVE_RANDOM} ${HAVE_RESIZETERM}
+PREFIX=         /usr/local
+BINDIR=         ${PREFIX}/bin
+MANDIR=         ${PREFIX}/share/man
+VARDIR=         ${PREFIX}/var
