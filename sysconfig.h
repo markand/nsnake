@@ -1,4 +1,0 @@
-#define HAVE_RESIZETERM
-#define HAVE_RANDOM
-#define HAVE_ERR
-#define HAVE_GETOPT
