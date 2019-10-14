@@ -1,3 +1,5 @@
-nsnake
-nsnake\.o
-tags
+^nsnake$
+^nsnake\.o$
+^tags$
+^sysconfig\.h$
+^nsnake-\d+\.\d+\.\d\.tar\.xz(\.asc)?$
