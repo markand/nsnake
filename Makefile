@@ -16,17 +16,26 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
+.POSIX:
+
 include config.mk
 
-SRCS=   nsnake.c
-OBJS=   ${SRCS:.c=.o}
+VERSION=        2.2.0
+SRCS=           nsnake.c
+OBJS=           ${SRCS:.c=.o}
+
+.SUFFIXES:
+.SUFFIXES: .c .o
 
 all: nsnake
 
 .c.o:
 	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
 
-${OBJS}: nsnake.h
+${OBJS}: config.mk sysconfig.h
+
+sysconfig.h: sysconfig.sh
+	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
 
 nsnake: ${OBJS}
 	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
@@ -41,6 +50,14 @@ uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
 
 clean:
-	rm -f ${OBJS} nsnake
+	rm -f ${OBJS} nsnake sysconfig.h nsnake-${VERSION}.tar.xz
 
-.PHONY: all clean install uninstall
+dist: clean
+	mkdir nsnake-${VERSION}
+	cp -R extern nsnake-${VERSION}
+	cp CHANGES.md INSTALL.md LICENSE.md README.md nsnake-${VERSION}
+	cp Makefile config.mk nsnake.6 nsnake.c sysconfig.sh nsnake-${VERSION}
+	tar -cJf nsnake-${VERSION}.tar.xz nsnake-${VERSION}
+	rm -rf nsnake-${VERSION}
+
+.PHONY: all clean dist install uninstall

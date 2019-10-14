@@ -1,6 +1,12 @@
 NSnake CHANGES
 ==============
 
+nsnake 2.2.0 2019-10-14
+-----------------------
+
+- Add automatic feature detection with sysconfig.sh,
+- Stay even more close to POSIX.
+
 nsnake 2.1.0 2019-09-05
 -----------------------
 

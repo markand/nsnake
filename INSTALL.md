@@ -29,9 +29,6 @@ The following options may be used to configure the build.
 - `MANDIR`: change to the manual page location (default: PREFIX/share/man),
 - `VARDIR`: change the score file database directory (default: PREFIX/var).
 
-Also, edit config.mk file to adjust NSnake to your system otherwise fallback
-implementations will be bundled in.
-
 Scores file
 -----------
 
