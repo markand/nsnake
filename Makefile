@@ -38,7 +38,7 @@ sysconfig.h: sysconfig.sh
 	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
 
 nsnake: ${OBJS}
-	${CC} -o $@ ${LDFLAGS} ${OBJS} ${LIBS}
+	${CC} -o $@ ${OBJS} ${LDFLAGS} ${LIBS}
 
 install: nsnake
 	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
