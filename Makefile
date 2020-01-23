@@ -18,7 +18,17 @@
 
 .POSIX:
 
-include config.mk
+# Build options.
+CFLAGS=         -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
+LDFLAGS=        -lncurses
+GID=            games
+UID=            games
+
+# Installation options.
+PREFIX=         /usr/local
+BINDIR=         ${PREFIX}/bin
+MANDIR=         ${PREFIX}/share/man
+VARDIR=         ${PREFIX}/var
 
 VERSION=        2.2.0
 SRCS=           nsnake.c
@@ -32,7 +42,7 @@ all: nsnake
 .c.o:
 	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
 
-${OBJS}: config.mk sysconfig.h
+${OBJS}: sysconfig.h
 
 sysconfig.h: sysconfig.sh
 	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
@@ -41,9 +51,15 @@ nsnake: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS} ${LIBS}
 
 install: nsnake
-	install -Dm2555 -g ${GID} -o ${UID} nsnake ${DESTDIR}${BINDIR}/nsnake
-	install -Dm0644 nsnake.6 ${DESTDIR}${MANDIR}/man6/nsnake.6
-	install -dm0770 -g ${GID} -o ${UID} ${DESTDIR}${VARDIR}/db/nsnake
+	mkdir -p ${DESTDIR}${BINDIR}
+	cp nsnake ${DESTDIR}${BINDIR}
+	chmod 2555 ${DESTDIR}${BINDIR}/nsnake
+	chown ${GID}:${UID} ${DESTDIR}${BINDIR}/nsnake
+	mkdir -p ${DESTDIR}${MANDIR}/man6
+	cp nsnake.6 ${DESTDIR}${MANDIR}/man6
+	mkdir -p ${DESTDIR}${VARDIR}/db/nsnake
+	chmod 770 ${DESTDIR}${VARDIR}/db/nsnake
+	chown ${GID}:${UID} ${DESTDIR}${VARDIR}/db/nsnake
 
 uninstall:
 	rm -f ${DESTDIR}${BINDIR}/nsnake
