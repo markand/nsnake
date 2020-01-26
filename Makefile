@@ -1,7 +1,7 @@
 #
 # Makefile -- NSnake makefile
 #
-# Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
+# Copyright (c) 2011-2020 David Demelier <markand@malikania.fr>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ BINDIR=         ${PREFIX}/bin
 MANDIR=         ${PREFIX}/share/man
 VARDIR=         ${PREFIX}/var
 
-VERSION=        2.2.0
+VERSION=        2.2.1
 SRCS=           nsnake.c
 OBJS=           ${SRCS:.c=.o}
 
@@ -72,7 +72,7 @@ dist: clean
 	mkdir nsnake-${VERSION}
 	cp -R extern nsnake-${VERSION}
 	cp CHANGES.md INSTALL.md LICENSE.md README.md nsnake-${VERSION}
-	cp Makefile config.mk nsnake.6 nsnake.c sysconfig.sh nsnake-${VERSION}
+	cp Makefile nsnake.6 nsnake.c sysconfig.sh nsnake-${VERSION}
 	tar -cJf nsnake-${VERSION}.tar.xz nsnake-${VERSION}
 	rm -rf nsnake-${VERSION}
 

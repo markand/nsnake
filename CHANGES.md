@@ -1,6 +1,13 @@
 NSnake CHANGES
 ==============
 
+nsnake 2.2.1 2020-01-26
+-----------------------
+
+- Fix build by passing -lncurses at the end,
+- Merge config.mk in Makefile,
+- Remove non-POSIX commands in Makefile.
+
 nsnake 2.2.0 2019-10-14
 -----------------------
 
