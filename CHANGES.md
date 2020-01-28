@@ -1,6 +1,11 @@
 NSnake CHANGES
 ==============
 
+nsnake current
+-----------------------
+
+- Removal of non-POSIX err(3) functions.
+
 nsnake 2.2.1 2020-01-26
 -----------------------
 

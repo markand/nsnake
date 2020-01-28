@@ -47,18 +47,6 @@ main(void)
 }
 EOF
 
-# err(3) family functions.
-cat << EOF | compile "#define HAVE_ERR"
-#include <err.h>
-
-int
-main(void)
-{
-	err(1, "");
-	errx(1, "");
-}
-EOF
-
 # getopt(3) function.
 cat << EOF | compile "#define HAVE_GETOPT"
 #include <unistd.h>

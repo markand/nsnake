@@ -17,10 +17,13 @@
  */
 
 #include <sys/stat.h>
+#include <errno.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
@@ -41,12 +44,6 @@
 #if !defined(HAVE_RANDOM)
 #	define random rand
 #	define srandom srand
-#endif
-
-#if defined(HAVE_ERR)
-#	include <err.h>
-#else
-#	include "extern/err.c"
 #endif
 
 #if !defined(HAVE_GETOPT)
@@ -108,6 +105,23 @@ static int verbose = 0;         /* be verbose */
 static uint8_t grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
 static WINDOW *top = NULL;
 static WINDOW *frame = NULL;
+
+static void
+die(bool sys, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	if (sys)
+		fprintf(stderr, ": %s\n", strerror(errno));
+	else
+		fprintf(stderr, "\n");
+
+	exit(1);
+}
 
 static void
 wset(WINDOW *frame, int pair)
@@ -395,14 +409,14 @@ show_scores(void)
 	struct score sc;
 
 	if (!(fp = fopen(DATABASE, "rb")))
-		err(1, "Could not read %s", DATABASE);
+		die(true, "Could not read %s", DATABASE);
 
 	if (verbose)
 		printf("Wall crossing %s\n", (warp) ? "enabled" : "disabled");
 
 	fread(header, sizeof (header), 1, fp);
 	if (strncmp(header, "nsnake-score", sizeof (header)) != 0)
-		errx(1, "Not a valid nsnake score file");
+		die(false, "Not a valid nsnake score file");
 
 	fread(&nscore, sizeof (nscore), 1, fp);
 	for (i = 0; i < nscore; ++i) {
@@ -480,7 +494,7 @@ resize_handler(int signal)
 
 	if (x < WIDTH || y < HEIGHT) {
 		quit(NULL);
-		errx(1, "Terminal has been resized too small, aborting");
+		die(false, "Terminal has been resized too small, aborting");
 	}
 
 	mvwin(frame, (y / 2) - (HEIGHT / 2), (x / 2) - (WIDTH / 2));
@@ -549,12 +563,12 @@ main(int argc, char *argv[])
 
 	if (!init()) {
 		quit(NULL);
-		errx(1, "Terminal too small, aborting");
+		die(false, "Terminal too small, aborting");
 	}
 		
 	if (top == NULL || frame == NULL) {
 		endwin();
-		errx(1, "ncurses failed to init");
+		die(false, "ncurses failed to init");
 	}
 
 	/* Apply GRID_WALL to the edges */
@@ -656,7 +670,7 @@ main(int argc, char *argv[])
 	printf("%sScore: %d\n", is_dead(&sn) ? "You died...\n" : "", sn.score);
 
 	if (!noscore && !register_score(&sn))
-		err(1, "Could not write score file %s", DATABASE);
+		die(true, "Could not write score file %s", DATABASE);
 
 	return 0;
 }
