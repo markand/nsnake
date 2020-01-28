@@ -63,14 +63,14 @@ enum grid {
 };
 
 struct snake {
-	uint32_t score;         /* user score */
-	uint16_t length;        /* snake's size */
-	int8_t dirx;            /* direction in x could be 0, 1 or -1 */
-	int8_t diry;            /* same for y */
+	int score;              /* user score */
+	int length;             /* snake's size */
+	int dirx;               /* direction in x could be 0, 1 or -1 */
+	int diry;               /* same for y */
 
 	struct {
-		uint8_t x;      /* each snake part has (x, y) position */
-		uint8_t y;      /* each part will be displayed */
+		int x;          /* each snake part has (x, y) position */
+		int y;          /* each part will be displayed */
 	} pos[SIZE];
 };
 
@@ -80,8 +80,8 @@ struct food {
 		FREE            /* increase the snake's length too */
 	} type;
 
-	uint8_t x;              /* Position of the current food, will be used */
-	uint8_t y;              /* in grid[][]. */
+	int x;                  /* Position of the current food, will be used */
+	int y;                  /* in grid[][]. */
 };
 
 struct score {
@@ -192,25 +192,21 @@ init(void)
 static void
 set_grid(struct snake *sn)
 {
-	uint16_t i;
-
-	for (i = 0; i < sn->length; ++i)
+	for (int i = 0; i < sn->length; ++i)
 		grid[sn->pos[i].y][sn->pos[i].x] = GRID_SNAKE;
 
 	/*
 	 * each snake part must follow the last part, pos[0] is head, then
 	 * pos[2] takes pos[1] place, pos[3] takes pos[2] and so on.
 	 */
-	grid[sn->pos[sn->length-1].y][sn->pos[sn->length-1].x] = GRID_EMPTY;
+	grid[sn->pos[sn->length - 1].y][sn->pos[sn->length - 1].x] = GRID_EMPTY;
 	memmove(&sn->pos[1], &sn->pos[0], sizeof (sn->pos) - sizeof (sn->pos[0]));
 }
 
 static void
 draw(const struct snake *sn, const struct food *fd)
 {
-	uint16_t i;
-
-	for (i = 0; i < sn->length; ++i) {
+	for (int i = 0; i < sn->length; ++i) {
 		wset(frame, COLOR_PAIR(color));
 		mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, '#');
 		wunset(frame, COLOR_PAIR(color));
@@ -239,7 +235,7 @@ static bool
 is_dead(const struct snake *sn)
 {
 	if (grid[sn->pos[0].y][sn->pos[0].x] == GRID_SNAKE)
-		return 1;
+		return true;
 
 	/* No warp enabled means dead in wall */
 	return !warp && grid[sn->pos[0].y][sn->pos[0].x] == GRID_WALL;
@@ -373,7 +369,7 @@ insert_score(const struct score *sc)
 	return true;
 }
 
-static int
+static bool
 register_score(const struct snake *sn)
 {
 	struct score sc;
@@ -453,10 +449,8 @@ wait(unsigned ms)
 static void
 quit(const struct snake *sn)
 {
-	uint16_t i;
-
 	if (sn != NULL) {
-		for (i = 0; i < sn->length; ++i) {
+		for (int i = 0; i < sn->length; ++i) {
 			mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
 			wait(50);
 			repaint();
