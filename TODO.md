@@ -1,4 +1,5 @@
 NSnake TODO
 ===========
 
-- Rewrite scores in simple text with a fixed limit.
+- Remove all Windows stuff.
+- Assume POSIX everywhere.

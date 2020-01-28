@@ -19,7 +19,8 @@
 .POSIX:
 
 # Build options.
-CFLAGS=         -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
+CC=             cc
+CFLAGS=         -std=c11 -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
 LDFLAGS=        -lncurses
 GID=            games
 UID=            games
@@ -30,7 +31,7 @@ BINDIR=         ${PREFIX}/bin
 MANDIR=         ${PREFIX}/share/man
 VARDIR=         ${PREFIX}/var
 
-VERSION=        2.2.1
+VERSION=        2.3.0
 SRCS=           nsnake.c
 OBJS=           ${SRCS:.c=.o}
 

@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdnoreturn.h>
 #include <string.h>
 #include <time.h>
 
@@ -53,7 +54,11 @@
 #define HEIGHT          23
 #define WIDTH           78
 #define SIZE            ((HEIGHT - 2) * (WIDTH - 2))
-#define DATABASE        VARDIR "/db/nsnake/scores"
+
+#define DATABASE        VARDIR "/db/nsnake/scores.txt"
+#define DATABASE_WC     VARDIR "/db/nsnake/scores-wc.txt"
+
+#define SCORES_MAX      10
 
 enum grid {
 	GRID_EMPTY,
@@ -85,15 +90,9 @@ struct food {
 };
 
 struct score {
-#if defined(_WIN32)
-#	define NAMELEN UNLEN
-#else
-#	define NAMELEN 32
-#endif
-	char name[NAMELEN + 1]; /* highscore's name */
-	uint32_t score;         /* score */
-	time_t time;            /* when? */
-	uint8_t wc;             /* wallcrossing or not */
+	char name[32];          /* highscore's name */
+	int score;              /* score */
+	long long time;         /* when? */
 };
 
 static bool setcolors = true;   /* enable colors */
@@ -102,11 +101,19 @@ static int color = 2;           /* green color by default */
 static bool noscore = false;    /* do not score */
 static bool verbose = true;     /* be verbose */
 
-static uint8_t grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
+static int grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
 static WINDOW *top = NULL;
 static WINDOW *frame = NULL;
 
-static void
+static const char *
+name(void)
+{
+	struct passwd *pw = getpwuid(getuid());
+
+	return pw ? pw->pw_name : "unknown";
+}
+
+static noreturn void
 die(bool sys, const char *fmt, ...)
 {
 	va_list ap;
@@ -299,135 +306,95 @@ direction(struct snake *sn, int ch)
 	}
 }
 
+static const char *
+scores_path(void)
+{
+	return warp ? DATABASE_WC : DATABASE;
+}
+
 static bool
-init_score(const struct score *sc)
+scores_read(struct score *scores)
 {
 	FILE *fp;
-	char header[12] = "nsnake-score";
-	uint32_t nscore = 1;
 
-	if (!(fp = fopen(DATABASE, "w+b")))
+	if (!(fp = fopen(scores_path(), "r")))
 		return false;
 
-	fwrite(header, sizeof (header), 1, fp);
-	fwrite(&nscore, sizeof (nscore), 1, fp);
-	fwrite(sc, sizeof (*sc), 1, fp);
+	for (int i = 0; i < SCORES_MAX; ++i) {
+		int ret = fscanf(fp, "%31[^\\|]|%d|%lld\n", scores->name,
+		    &scores->score, &scores->time);
+
+		if (ret == EOF)
+			break;
+		if (ret == 3)
+			scores++;
+	}
+
 	fclose(fp);
 
 	return true;
 }
 
 static bool
-insert_score(const struct score *sc)
+scores_write(const struct score *scores)
 {
 	FILE *fp;
-	uint32_t nscore, i;
-	char header[12] = { 0 };
-	struct score *buffer;
 
-	if (!(fp = fopen(DATABASE, "r+b")))
+	if (!(fp = fopen(scores_path(), "w")))
 		return false;
 
-	fread(header, sizeof (header), 1, fp);
-	if (strncmp(header, "nsnake-score", sizeof (header)) != 0) {
-		fclose(fp);
-		return false;
-	}
+	for (int i = 0; i < SCORES_MAX; ++i)
+		fprintf(fp, "%s|%d|%lld\n", scores[i].name, scores[i].score,
+		    scores[i].time);
 
-	fread(&nscore, sizeof (nscore), 1, fp);
-	if (!(buffer = calloc(nscore + 1, sizeof (*buffer)))) {
-		fclose(fp);
-		return false;
-	}
-
-	fread(buffer, sizeof (*buffer), nscore, fp);
-	for (i = 0; i < nscore; ++i)
-		if (sc->score >= buffer[i].score && sc->wc == buffer[i].wc)
-			break;
-
-	/* Replace same score */
-	if (sc->score == buffer[i].score && strcmp(buffer[i].name, sc->name) == 0)
-		memcpy(&buffer[i], sc, sizeof (*sc));
-	else {
-		memmove(&buffer[i + 1], &buffer[i], (sizeof (*sc)) * (nscore - i));
-		memcpy(&buffer[i], sc, sizeof (*sc));
-
-		/* There is now a new entry */
-		++ nscore;
-
-		/* Update number of score entries */
-		fseek(fp, sizeof (header), SEEK_SET);
-		fwrite(&nscore, sizeof (nscore), 1, fp);
-	}
-
-	/* Finally write */
-	fseek(fp, sizeof (header) + sizeof (nscore), SEEK_SET);
-	fwrite(buffer, sizeof (*sc), nscore, fp);
-	free(buffer);
-	fclose (fp);
+	fclose(fp);
 
 	return true;
 }
 
 static bool
-register_score(const struct snake *sn)
+scores_register(const struct snake *sn)
 {
-	struct score sc;
-	struct stat st;
-	bool (*reshandler)(const struct score *);
+	struct score scores[SCORES_MAX] = {0};
+	struct score *s;
 
-	memset(&sc, 0, sizeof (sc));
+	if (!scores_read(scores))
+		return false;
 
-#if defined(_WIN32)
-	DWORD length = NAMELEN + 1;
-	GetUserNameA(sc.name, &length);
-#else
-	strncpy(sc.name, getpwuid(getuid())->pw_name, sizeof (sc.name));
-#endif
-	sc.score = sn->score;
-	sc.time = time(NULL);
-	sc.wc = warp;
+	for (s = scores; s != &scores[SCORES_MAX]; ++s)
+		if (sn->score >= s->score)
+			break;
 
-	if (stat(DATABASE, &st) < 0 || st.st_size == 0)
-		reshandler = &(init_score);
-	else
-		reshandler = &(insert_score);
+	/* Not in top list. */
+	if (s == &scores[SCORES_MAX])
+		return true;
 
-	return reshandler(&sc);
+	strncpy(s->name, name(), sizeof (s->name));
+	s->score = sn->score;
+	s->time = time(NULL);
+
+	return scores_write(scores);
 }
 
 static void
-show_scores(void)
+scores_show(void)
 {
-	FILE *fp;
-	uint32_t nscore, i;
-	char header[12] = { 0 };
-	struct score sc;
+	struct score scores[SCORES_MAX] = {0};
 
-	if (!(fp = fopen(DATABASE, "rb")))
-		die(true, "Could not read %s", DATABASE);
+	if (!scores_read(scores))
+		die(true, "could not open scores");
 
-	if (verbose)
-		printf("Wall crossing %s\n", (warp) ? "enabled" : "disabled");
-
-	fread(header, sizeof (header), 1, fp);
-	if (strncmp(header, "nsnake-score", sizeof (header)) != 0)
-		die(false, "Not a valid nsnake score file");
-
-	fread(&nscore, sizeof (nscore), 1, fp);
-	for (i = 0; i < nscore; ++i) {
-		fread(&sc, sizeof (sc), 1, fp);
-
-		if (sc.wc == warp) {
-			char date[128] = { 0 };
-			struct tm *tm = localtime(&sc.time);
+	for (struct score *s = scores; s != &scores[SCORES_MAX]; ++s) {
+		if (s->name[0]) {
+			char date[128] = {0};
+			time_t time = s->time;
+			struct tm *tm = localtime(&time);
 
 			strftime(date, sizeof (date), "%c", tm);
-			printf("%-16s%-10u %s\n", sc.name, sc.score, date);
+			printf("%-16s%-10u %s\n", s->name, s->score, date);
 		}
 	}
 
-	fclose(fp);
 	exit(0);
 }
 
@@ -508,8 +475,7 @@ int
 main(int argc, char **argv)
 {
 	int x, y, ch;
-	bool running;
-	bool showscore = false;
+	bool running, show_scores = false;
 
 	struct snake sn = { 0, 4, 1, 0, {
 		{5, 10}, {5, 9}, {5, 8}, {5, 7} }
@@ -529,13 +495,13 @@ main(int argc, char **argv)
 			noscore = true;
 			break;
 		case 's':
-			showscore = true;
+			show_scores = true;
 			break;
 		case 'v':
 			verbose = true;
 			break;
 		case 'w':
-			warp = true;
+			warp = false;
 			break;
 		default:
 			usage();
@@ -543,8 +509,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (showscore)
-		show_scores();
+	if (show_scores)
+		scores_show();
 
 	argc -= optind;
 	argv += optind;
@@ -663,6 +629,6 @@ main(int argc, char **argv)
 	/* User has left or is he dead? */
 	printf("%sScore: %d\n", is_dead(&sn) ? "You died...\n" : "", sn.score);
 
-	if (!noscore && !register_score(&sn))
+	if (!noscore && !scores_register(&sn))
 		die(true, "Could not write score file %s", DATABASE);
 }
