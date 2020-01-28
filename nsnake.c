@@ -16,40 +16,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <curses.h>
 
-#if !defined(_WIN32)
-#	include <unistd.h>
-#	include <sys/types.h>
-#	include <pwd.h>
-#else
-#	include <io.h>
-#	include <lmcons.h>
-#	include <windows.h>
-#endif
-
 #include "sysconfig.h"
-
-#if !defined(HAVE_RANDOM)
-#	define random rand
-#	define srandom srand
-#endif
-
-#if !defined(HAVE_GETOPT)
-#	include "extern/getopt.c"
-#endif
 
 #define HEIGHT          23
 #define WIDTH           78

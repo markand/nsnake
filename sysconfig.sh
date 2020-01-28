@@ -2,7 +2,7 @@
 #
 # sysconfig.sh -- automatically configure portability checks
 #
-# Copyright (c) 2011-2019 David Demelier <markand@malikania.fr>
+# Copyright (c) 2011-2020 David Demelier <markand@malikania.fr>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,28 +32,5 @@ int
 main(void)
 {
 	resizeterm(0, 0);
-}
-EOF
-
-# random/srandom.
-cat << EOF | compile "#define HAVE_RANDOM"
-#include <stdlib.h>
-
-int
-main(void)
-{
-	srandom(0);
-	random();
-}
-EOF
-
-# getopt(3) function.
-cat << EOF | compile "#define HAVE_GETOPT"
-#include <unistd.h>
-
-int
-main(void)
-{
-	getopt(0, 0, 0);
 }
 EOF
