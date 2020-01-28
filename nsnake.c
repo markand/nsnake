@@ -96,11 +96,11 @@ struct score {
 	uint8_t wc;             /* wallcrossing or not */
 };
 
-static int setcolors = 1;       /* enable colors */
-static int warp = 1;            /* enable wall crossing */
+static bool setcolors = true;   /* enable colors */
+static bool warp = true;        /* enable wall crossing */
 static int color = 2;           /* green color by default */
-static int noscore = 0;         /* do not score */
-static int verbose = 0;         /* be verbose */
+static bool noscore = false;    /* do not score */
+static bool verbose = true;     /* be verbose */
 
 static uint8_t grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
 static WINDOW *top = NULL;
@@ -235,7 +235,7 @@ draw(const struct snake *sn, const struct food *fd)
 	repaint();
 }
 
-static int
+static bool
 is_dead(const struct snake *sn)
 {
 	if (grid[sn->pos[0].y][sn->pos[0].x] == GRID_SNAKE)
@@ -245,7 +245,7 @@ is_dead(const struct snake *sn)
 	return !warp && grid[sn->pos[0].y][sn->pos[0].x] == GRID_WALL;
 }
 
-static int
+static bool
 is_eaten(const struct snake *sn)
 {
 	return grid[sn->pos[0].y][sn->pos[0].x] == GRID_FOOD;
@@ -303,7 +303,7 @@ direction(struct snake *sn, int ch)
 	}
 }
 
-static int
+static bool
 init_score(const struct score *sc)
 {
 	FILE *fp;
@@ -311,17 +311,17 @@ init_score(const struct score *sc)
 	uint32_t nscore = 1;
 
 	if (!(fp = fopen(DATABASE, "w+b")))
-		return 0;
+		return false;
 
 	fwrite(header, sizeof (header), 1, fp);
 	fwrite(&nscore, sizeof (nscore), 1, fp);
 	fwrite(sc, sizeof (*sc), 1, fp);
 	fclose(fp);
 
-	return 1;
+	return true;
 }
 
-static int
+static bool
 insert_score(const struct score *sc)
 {
 	FILE *fp;
@@ -330,18 +330,18 @@ insert_score(const struct score *sc)
 	struct score *buffer;
 
 	if (!(fp = fopen(DATABASE, "r+b")))
-		return 0;
+		return false;
 
 	fread(header, sizeof (header), 1, fp);
 	if (strncmp(header, "nsnake-score", sizeof (header)) != 0) {
 		fclose(fp);
-		return 0;
+		return false;
 	}
 
 	fread(&nscore, sizeof (nscore), 1, fp);
 	if (!(buffer = calloc(nscore + 1, sizeof (*buffer)))) {
 		fclose(fp);
-		return 0;
+		return false;
 	}
 
 	fread(buffer, sizeof (*buffer), nscore, fp);
@@ -363,14 +363,14 @@ insert_score(const struct score *sc)
 		fseek(fp, sizeof (header), SEEK_SET);
 		fwrite(&nscore, sizeof (nscore), 1, fp);
 	}
-		
+
 	/* Finally write */
 	fseek(fp, sizeof (header) + sizeof (nscore), SEEK_SET);
 	fwrite(buffer, sizeof (*sc), nscore, fp);
 	free(buffer);
 	fclose (fp);
 
-	return 1;
+	return true;
 }
 
 static int
@@ -378,7 +378,7 @@ register_score(const struct snake *sn)
 {
 	struct score sc;
 	struct stat st;
-	int (*reshandler)(const struct score *);
+	bool (*reshandler)(const struct score *);
 
 	memset(&sc, 0, sizeof (sc));
 
@@ -511,11 +511,11 @@ usage(void)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	int running;
 	int x, y, ch;
-	int showscore = 0;
+	bool running;
+	bool showscore = false;
 
 	struct snake sn = { 0, 4, 1, 0, {
 		{5, 10}, {5, 9}, {5, 8}, {5, 7} }
@@ -526,22 +526,22 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
 		switch (ch) {
 		case 'c':
-			setcolors = 0;
+			setcolors = false;
 			break;
 		case 'C':
 			color = atoi(optarg);
 			break;
 		case 'n':
-			noscore = 1;
+			noscore = true;
 			break;
 		case 's':
-			showscore = 1;
+			showscore = true;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose = true;
 			break;
 		case 'w':
-			warp = 0;
+			warp = true;
 			break;
 		default:
 			usage();
@@ -565,7 +565,7 @@ main(int argc, char *argv[])
 		quit(NULL);
 		die(false, "Terminal too small, aborting");
 	}
-		
+
 	if (top == NULL || frame == NULL) {
 		endwin();
 		die(false, "ncurses failed to init");
@@ -588,7 +588,7 @@ main(int argc, char *argv[])
 	/* First direction is to right */
 	sn.pos[0].x += sn.dirx;
 
-	running = 1;
+	running = true;
 	while (!is_dead(&sn) && running) {
 		if (is_eaten(&sn)) {
 			int i;
@@ -671,6 +671,4 @@ main(int argc, char *argv[])
 
 	if (!noscore && !register_score(&sn))
 		die(true, "Could not write score file %s", DATABASE);
-
-	return 0;
 }
