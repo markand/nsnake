@@ -16,11 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,11 +29,13 @@
 
 #include <curses.h>
 
-#include "sysconfig.h"
-
 #define HEIGHT          23
 #define WIDTH           78
 #define SIZE            ((HEIGHT - 2) * (WIDTH - 2))
+
+#ifndef VARDIR
+#define VARDIR          "/var"
+#endif
 
 #define DATABASE        VARDIR "/db/nsnake/scores.txt"
 #define DATABASE_WC     VARDIR "/db/nsnake/scores-wc.txt"
@@ -50,7 +49,7 @@ enum grid {
 	GRID_FOOD
 };
 
-struct snake {
+static struct {
 	int score;              /* user score */
 	int length;             /* snake's size */
 	int dirx;               /* direction in x could be 0, 1 or -1 */
@@ -60,9 +59,20 @@ struct snake {
 		int x;          /* each snake part has (x, y) position */
 		int y;          /* each part will be displayed */
 	} pos[SIZE];
+} snake = {
+	.score  = 0,
+	.length = 4,
+	.dirx   = 1,
+	.diry   = 0,
+	.pos    = {
+		{ 5, 10 },
+		{ 5, 9  },
+		{ 5, 8  },
+		{ 5, 7  }
+	}
 };
 
-struct food {
+static struct {
 	enum {
 		NORM = 0,       /* both increase the score but only NORM */
 		FREE            /* increase the snake's length too */
@@ -70,7 +80,7 @@ struct food {
 
 	int x;                  /* Position of the current food, will be used */
 	int y;                  /* in grid[][]. */
-};
+} food;
 
 struct score {
 	char name[32];          /* highscore's name */
@@ -78,15 +88,25 @@ struct score {
 	long long time;         /* when? */
 };
 
-static bool setcolors = true;   /* enable colors */
-static bool warp = true;        /* enable wall crossing */
-static int color = 2;           /* green color by default */
-static bool noscore = false;    /* do not score */
-static bool verbose = true;     /* be verbose */
+static struct {
+	int color;              /* Color: 0-8 and -1 to disable) */
+	bool warp;              /* Enable warp (wall-crossing) */
+	bool quick;             /* Don't save scores */
+	bool verbose;           /* Be more verbose */
+} options = {
+	.color  = 2,
+	.warp   = true,
+	.quick  = false,
+	.verbose = false
+};
 
-static int grid[HEIGHT][WIDTH] = {{ GRID_EMPTY }};
-static WINDOW *top = NULL;
-static WINDOW *frame = NULL;
+static struct {
+	int grid[HEIGHT][WIDTH];
+	WINDOW *top;
+	WINDOW *frame;
+} view = {
+	.grid = {{ GRID_EMPTY }}
+};
 
 static const char *
 name(void)
@@ -116,14 +136,14 @@ die(bool sys, const char *fmt, ...)
 static void
 wset(WINDOW *frame, int pair)
 {
-	if (setcolors)
+	if (options.color >= 0)
 		wattron(frame, pair);
 }
 
 static void
 wunset(WINDOW *frame, int pair)
 {
-	if (setcolors)
+	if (options.color >= 0)
 		wattroff(frame, pair);
 }
 
@@ -131,13 +151,15 @@ static void
 repaint(void)
 {
 	refresh();
-	wrefresh(top);
-	wrefresh(frame);
+	wrefresh(view.top);
+	wrefresh(view.frame);
 }
 
-static int
+static void
 init(void)
 {
+	srandom((unsigned int)time(NULL));
+
 	initscr();
 	noecho();
 	curs_set(0);
@@ -145,142 +167,142 @@ init(void)
 	nodelay(stdscr, TRUE);
 
 	if (COLS < (WIDTH + 1) || LINES < (HEIGHT + 1))
-		return -1;
+		die(false, "terminal too small");
 
-	if (color < 0 || color > 8)
-		color = 4;
+	if (options.color < 0 || options.color > 8)
+		options.color = 4;
 	else
-		color += 2;
+		options.color += 2;
 
-	if (setcolors && has_colors()) {
-		int i;
-
+	if (options.color >= 0 && has_colors()) {
 		use_default_colors();
 		start_color();
 
 		init_pair(0, COLOR_WHITE, COLOR_BLACK); /* topbar */
 		init_pair(1, COLOR_YELLOW, -1);         /* food */
 
-		for (i = 0; i < COLORS; ++i)
+		for (int i = 0; i < COLORS; ++i)
 			init_pair(i + 2, i, -1);
 	}
 
-	top = newwin(1, 0, 0, 0);
-	frame = newwin(HEIGHT, WIDTH, (LINES/2)-(HEIGHT/2), (COLS/2)-(WIDTH/2));
-	box(frame, ACS_VLINE, ACS_HLINE);
+	view.top = newwin(1, 0, 0, 0);
+	view.frame = newwin(HEIGHT, WIDTH, (LINES / 2) - (HEIGHT / 2),
+	    (COLS / 2) - (WIDTH / 2));
+	box(view.frame, ACS_VLINE, ACS_HLINE);
 
-	if (setcolors) {
-		wbkgd(top, COLOR_PAIR(0));
-		wattrset(top, COLOR_PAIR(0) | A_BOLD);
+	if (options.color >= 0) {
+		wbkgd(view.top, COLOR_PAIR(0));
+		wattrset(view.top, COLOR_PAIR(0) | A_BOLD);
 	}
 
 	repaint();
-
-	return 1;
 }
 
 static void
-set_grid(struct snake *sn)
+update_grid(void)
 {
-	for (int i = 0; i < sn->length; ++i)
-		grid[sn->pos[i].y][sn->pos[i].x] = GRID_SNAKE;
+	for (int i = 0; i < snake.length; ++i)
+		view.grid[snake.pos[i].y][snake.pos[i].x] = GRID_SNAKE;
 
 	/*
 	 * each snake part must follow the last part, pos[0] is head, then
 	 * pos[2] takes pos[1] place, pos[3] takes pos[2] and so on.
 	 */
-	grid[sn->pos[sn->length - 1].y][sn->pos[sn->length - 1].x] = GRID_EMPTY;
-	memmove(&sn->pos[1], &sn->pos[0], sizeof (sn->pos) - sizeof (sn->pos[0]));
+	view.grid[snake.pos[snake.length - 1].y][snake.pos[snake.length - 1].x] = GRID_EMPTY;
+	memmove(&snake.pos[1], &snake.pos[0], sizeof (snake.pos) - sizeof (snake.pos[0]));
 }
 
 static void
-draw(const struct snake *sn, const struct food *fd)
+draw(void)
 {
-	for (int i = 0; i < sn->length; ++i) {
-		wset(frame, COLOR_PAIR(color));
-		mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, '#');
-		wunset(frame, COLOR_PAIR(color));
+	for (int i = 0; i < snake.length; ++i) {
+		wset(view.frame, COLOR_PAIR(options.color));
+		mvwaddch(view.frame, snake.pos[i].y, snake.pos[i].x, '#');
+		wunset(view.frame, COLOR_PAIR(options.color));
 	}
 
 	/* Print head */
-	wset(frame, COLOR_PAIR(color) | A_BOLD);
-	mvwaddch(frame, sn->pos[0].y, sn->pos[0].x, '@');
-	wunset(frame, COLOR_PAIR(color) | A_BOLD);
+	wset(view.frame, COLOR_PAIR(options.color) | A_BOLD);
+	mvwaddch(view.frame, snake.pos[0].y, snake.pos[0].x, '@');
+	wunset(view.frame, COLOR_PAIR(options.color) | A_BOLD);
 
 	/* Erase the snake's tail */
-	mvwaddch(frame, sn->pos[sn->length].y, sn->pos[sn->length].x, ' ');
+	mvwaddch(view.frame, snake.pos[snake.length].y, snake.pos[snake.length].x, ' ');
 
 	/* Print food */
-	wset(frame, COLOR_PAIR(1) | A_BOLD);
-	mvwaddch(frame, fd->y, fd->x, (fd->type == FREE) ? '*' : '+');
-	wunset(frame, COLOR_PAIR(1) | A_BOLD);
+	wset(view.frame, COLOR_PAIR(1) | A_BOLD);
+	mvwaddch(view.frame, food.y, food.x, (food.type == FREE) ? '*' : '+');
+	wunset(view.frame, COLOR_PAIR(1) | A_BOLD);
 
 	/* Print score */
-	wmove(top, 0, 0);
-	wprintw(top, "Score: %d", sn->score);
+	wmove(view.top, 0, 0);
+	wprintw(view.top, "Score: %d", snake.score);
 	repaint();
 }
 
 static bool
-is_dead(const struct snake *sn)
+is_dead(void)
 {
-	if (grid[sn->pos[0].y][sn->pos[0].x] == GRID_SNAKE)
+	if (view.grid[snake.pos[0].y][snake.pos[0].x] == GRID_SNAKE)
 		return true;
 
 	/* No warp enabled means dead in wall */
-	return !warp && grid[sn->pos[0].y][sn->pos[0].x] == GRID_WALL;
+	return !options.warp && view.grid[snake.pos[0].y][snake.pos[0].x] == GRID_WALL;
 }
 
 static bool
-is_eaten(const struct snake *sn)
+is_eaten(void)
 {
-	return grid[sn->pos[0].y][sn->pos[0].x] == GRID_FOOD;
+	return view.grid[snake.pos[0].y][snake.pos[0].x] == GRID_FOOD;
 }
 
 static void
-spawn(struct food *fd)
+spawn(void)
 {
 	int num;
 
 	do {
-		fd->x = (random() % (WIDTH - 2)) + 1;
-		fd->y = (random() % (HEIGHT - 2)) + 1;
-	} while (grid[fd->y][fd->x] != GRID_EMPTY);
+		food.x = (random() % (WIDTH - 2)) + 1;
+		food.y = (random() % (HEIGHT - 2)) + 1;
+	} while (view.grid[food.y][food.x] != GRID_EMPTY);
 
 	/* Free food does not grow the snake */
 	num = ((random() % 7) - 1) + 1;
-	fd->type = (num == 6) ? FREE : NORM;
+	food.type = (num == 6) ? FREE : NORM;
+
+	/* Put on grid. */
+	view.grid[food.y][food.x] = GRID_FOOD;
 }
 
 static void
-direction(struct snake *sn, int ch)
+rotate(int ch)
 {
 	switch (ch) {
 	case KEY_LEFT: case 'h': case 'H':
-		if (sn->dirx != 1) {
-			sn->dirx = -1;
-			sn->diry = 0;
+		if (snake.dirx != 1) {
+			snake.dirx = -1;
+			snake.diry = 0;
 		}
 
 		break;
 	case KEY_UP: case 'k': case 'K':
-		if (sn->diry != 1) {
-			sn->dirx = 0;
-			sn->diry = -1;
+		if (snake.diry != 1) {
+			snake.dirx = 0;
+			snake.diry = -1;
 		}
 
 		break;
 	case KEY_DOWN: case 'j': case 'J':
-		if (sn->diry != -1) {
-			sn->dirx = 0;
-			sn->diry = 1;
+		if (snake.diry != -1) {
+			snake.dirx = 0;
+			snake.diry = 1;
 		}
 
 		break;
 	case KEY_RIGHT: case 'l': case 'L':
-		if (sn->dirx != -1) {
-			sn->dirx = 1;
-			sn->diry = 0;
+		if (snake.dirx != -1) {
+			snake.dirx = 1;
+			snake.diry = 0;
 		}
 
 		break;
@@ -292,25 +314,25 @@ direction(struct snake *sn, int ch)
 static const char *
 scores_path(void)
 {
-	return warp ? DATABASE_WC : DATABASE;
+	return options.warp ? DATABASE_WC : DATABASE;
 }
 
 static bool
-scores_read(struct score *scores)
+scores_read(struct score scores[SCORES_MAX])
 {
 	FILE *fp;
 
 	if (!(fp = fopen(scores_path(), "r")))
 		return false;
 
-	for (int i = 0; i < SCORES_MAX; ++i) {
-		int ret = fscanf(fp, "%31[^\\|]|%d|%lld\n", scores->name,
-		    &scores->score, &scores->time);
+	for (struct score *s = scores; s != &scores[SCORES_MAX]; ) {
+		int ret = fscanf(fp, "%31[^\\|]|%d|%lld\n", s->name,
+		    &s->score, &s->time);
 
 		if (ret == EOF)
 			break;
 		if (ret == 3)
-			scores++;
+			s++;
 	}
 
 	fclose(fp);
@@ -319,16 +341,15 @@ scores_read(struct score *scores)
 }
 
 static bool
-scores_write(const struct score *scores)
+scores_write(const struct score scores[SCORES_MAX])
 {
 	FILE *fp;
 
 	if (!(fp = fopen(scores_path(), "w")))
 		return false;
 
-	for (int i = 0; i < SCORES_MAX; ++i)
-		fprintf(fp, "%s|%d|%lld\n", scores[i].name, scores[i].score,
-		    scores[i].time);
+	for (const struct score *s = scores; s != &scores[SCORES_MAX] && s->name[0]; ++s)
+		fprintf(fp, "%s|%d|%lld\n", s->name, s->score, s->time);
 
 	fclose(fp);
 
@@ -336,7 +357,7 @@ scores_write(const struct score *scores)
 }
 
 static bool
-scores_register(const struct snake *sn)
+scores_register(void)
 {
 	struct score scores[SCORES_MAX] = {0};
 	struct score *s;
@@ -345,7 +366,7 @@ scores_register(const struct snake *sn)
 		return false;
 
 	for (s = scores; s != &scores[SCORES_MAX]; ++s)
-		if (sn->score >= s->score)
+		if (snake.score >= s->score)
 			break;
 
 	/* Not in top list. */
@@ -353,7 +374,7 @@ scores_register(const struct snake *sn)
 		return true;
 
 	strncpy(s->name, name(), sizeof (s->name));
-	s->score = sn->score;
+	s->score = snake.score;
 	s->time = time(NULL);
 
 	return scores_write(scores);
@@ -382,72 +403,33 @@ scores_show(void)
 }
 
 static void
-wait(unsigned ms)
+wait(unsigned int ms)
 {
-#if defined(_WIN32)
-	Sleep(ms);
-#else
 	struct timespec ts = {
 		.tv_sec = 0,
 		.tv_nsec = ms * 1000000
 	};
 
-	nanosleep(&ts, NULL);
-#endif
+	while (nanosleep(&ts, &ts));
 }
 
 static void
-quit(const struct snake *sn)
+quit(void)
 {
-	if (sn != NULL) {
-		for (int i = 0; i < sn->length; ++i) {
-			mvwaddch(frame, sn->pos[i].y, sn->pos[i].x, ' ');
-			wait(50);
-			repaint();
-		}
+	/* Snake animation being dead. */
+	for (int i = 0; i < snake.length; ++i) {
+		mvwaddch(view.frame, snake.pos[i].y, snake.pos[i].x, ' ');
+		wait(50);
+		repaint();
 	}
 
-	delwin(top);
-	delwin(frame);
+	delwin(view.top);
+	delwin(view.frame);
 	delwin(stdscr);
 	endwin();
 }
 
-#if defined(HAVE_SIGWINCH)
-
-static void
-resize_handler(int signal)
-{
-	int x, y;
-
-	if (signal != SIGWINCH)
-		return;
-
-	/* XXX: I would like to pause the game until the terminal is resized */
-	endwin();
-
-#if defined(HAVE_RESIZETERM)
-	resizeterm(LINES, COLS);
-#endif
-	repaint(); clear();
-
-	/* Color the top bar */
-	wbkgd(top, COLOR_PAIR(0) | A_BOLD);
-
-	getmaxyx(stdscr, y, x);
-
-	if (x < WIDTH || y < HEIGHT) {
-		quit(NULL);
-		die(false, "Terminal has been resized too small, aborting");
-	}
-
-	mvwin(frame, (y / 2) - (HEIGHT / 2), (x / 2) - (WIDTH / 2));
-	repaint();
-}
-
-#endif
-
-static void
+static noreturn void
 usage(void)
 {
 	fprintf(stderr, "usage: nsnake [-cnsvw] [-C color]\n");
@@ -455,36 +437,30 @@ usage(void)
 }
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int x, y, ch;
-	bool running, show_scores = false;
-
-	struct snake sn = { 0, 4, 1, 0, {
-		{5, 10}, {5, 9}, {5, 8}, {5, 7} }
-	};
-
-	struct food fd = { NORM, 0, 0 };
+	bool running = true, show_scores = false;
 
 	while ((ch = getopt(argc, argv, "cC:nsvw")) != -1) {
 		switch (ch) {
 		case 'c':
-			setcolors = false;
+			options.color = -1;
 			break;
 		case 'C':
-			color = atoi(optarg);
+			options.color = atoi(optarg);
 			break;
 		case 'n':
-			noscore = true;
+			options.quick= true;
 			break;
 		case 's':
 			show_scores = true;
 			break;
 		case 'v':
-			verbose = true;
+			options.verbose = true;
 			break;
 		case 'w':
-			warp = false;
+			options.warp = false;
 			break;
 		default:
 			usage();
@@ -498,81 +474,60 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	srandom((unsigned)time(NULL));
-
-#if defined(HAVE_SIGWINCH)
-	signal(SIGWINCH, resize_handler);
-#endif
-
-	if (!init()) {
-		quit(NULL);
-		die(false, "Terminal too small, aborting");
-	}
-
-	if (top == NULL || frame == NULL) {
-		endwin();
-		die(false, "ncurses failed to init");
-	}
+	init();
 
 	/* Apply GRID_WALL to the edges */
 	for (y = 0; y < HEIGHT; ++y)
-		grid[y][0] = grid[y][WIDTH - 1] = GRID_WALL;
+		view.grid[y][0] = view.grid[y][WIDTH - 1] = GRID_WALL;
 	for (x = 0; x < WIDTH; ++x)
-		grid[0][x] = grid[HEIGHT - 1][x] = GRID_WALL;
+		view.grid[0][x] = view.grid[HEIGHT - 1][x] = GRID_WALL;
 
-	/* Do not spawn food on snake */
-	set_grid(&sn);
-	spawn(&fd);
+	/* Apply initial grid values */
+	update_grid();
+	spawn();
+	draw();
 
-	/* Apply food on the grid */
-	grid[fd.y][fd.x] = GRID_FOOD;
-	draw(&sn, &fd);
+	/* Move snake head position to avoid losing immediately. */
+	snake.pos[0].x += snake.dirx;
 
-	/* First direction is to right */
-	sn.pos[0].x += sn.dirx;
+	while (!is_dead() && running) {
+		int ch;
 
-	running = true;
-	while (!is_dead(&sn) && running) {
-		if (is_eaten(&sn)) {
-			int i;
+		if (is_eaten()) {
+			if (food.type == NORM)
+				snake.length += 2;
 
-			if (fd.type == NORM)
-				sn.length += 2;
-
-			for (i = 0; i < sn.length; ++i)
-				grid[sn.pos[i].y][sn.pos[i].x] = GRID_SNAKE;
+			for (int i = 0; i < snake.length; ++i)
+				view.grid[snake.pos[i].y][snake.pos[i].x] = GRID_SNAKE;
 
 			/* If the screen is totally filled */
-			if (sn.length >= SIZE) {
+			if (snake.length >= SIZE) {
 				/* Emulate new game */
-				for (i = 4; i < SIZE; ++i) {
-					mvwaddch(frame, sn.pos[i].y, sn.pos[i].x, ' ');
-					grid[sn.pos[i].y][sn.pos[i].x] = GRID_EMPTY;
+				for (int i = 4; i < SIZE; ++i) {
+					mvwaddch(view.frame, snake.pos[i].y, snake.pos[i].x, ' ');
+					view.grid[snake.pos[i].y][snake.pos[i].x] = GRID_EMPTY;
 				}
 
-				sn.length = 4;
+				snake.length = 4;
 			}
 
-			if (fd.type == NORM)
-				set_grid(&sn);
+			if (food.type == NORM)
+				update_grid();
 
-			/* Prevent food spawning on snake's tail */
-			spawn(&fd);
-
-			sn.score += 1;
-			grid[fd.y][fd.x] = GRID_FOOD;
+			spawn();
+			snake.score += 1;
 		}
 
-		/* Draw and define grid with snake parts */
-		draw(&sn, &fd);
-		set_grid(&sn);
+		/* Draw and define grid with snake.ke parts */
+		draw();
+		update_grid();
 
 		/* Go to the next position */
-		sn.pos[0].x += sn.dirx;
-		sn.pos[0].y += sn.diry;
+		snake.pos[0].x += snake.dirx;
+		snake.pos[0].y += snake.diry;
 
-		ch = getch();
-		if (ch == 'p') {
+		switch ((ch = getch())) {
+		case 'p':
 			nodelay(stdscr, FALSE);
 			while ((ch = getch()) != 'p' && ch != 'q')
 				;
@@ -581,37 +536,42 @@ main(int argc, char **argv)
 				running = 0;
 
 			nodelay(stdscr, TRUE);
-		} else if (ch == 'q')
+			break;
+		case 'q':
 			running = 0;
-		else if (ch == 'c')
-			color = (color + 1) % 8;
-		else if (ch)
-			direction(&sn, ch);
-
-		/* If warp enabled, touching wall cross to the opposite */
-		if (warp) {
-			if (sn.pos[0].x == WIDTH - 1)
-				sn.pos[0].x = 1;
-			else if (sn.pos[0].x == 0)
-				sn.pos[0].x = WIDTH - 2;
-			else if (sn.pos[0].y == HEIGHT - 1)
-				sn.pos[0].y = 1;
-			else if (sn.pos[0].y == 0)
-				sn.pos[0].y = HEIGHT - 2;
+			break;
+		case 'c':
+			options.color = (options.color + 1) % 8;
+			break;
+		default:
+			rotate(ch);
+			break;
 		}
 
-		if (sn.diry != 0)
+		/* If warp enabled, touching wall cross to the opposite */
+		if (options.warp) {
+			if (snake.pos[0].x == WIDTH - 1)
+				snake.pos[0].x = 1;
+			else if (snake.pos[0].x == 0)
+				snake.pos[0].x = WIDTH - 2;
+			else if (snake.pos[0].y == HEIGHT - 1)
+				snake.pos[0].y = 1;
+			else if (snake.pos[0].y == 0)
+				snake.pos[0].y = HEIGHT - 2;
+		}
+
+		if (snake.diry != 0)
 			wait(118);
 		else
 			wait(100);
 	}
 
-	/* The snake is dead. */
-	quit(&sn);
+	/* The snake.ke is dead. */
+	quit();
 
 	/* User has left or is he dead? */
-	printf("%sScore: %d\n", is_dead(&sn) ? "You died...\n" : "", sn.score);
+	printf("%sScore: %d\n", is_dead() ? "You died...\n" : "", snake.score);
 
-	if (!noscore && !scores_register(&sn))
+	if (!options.quick && !scores_register())
 		die(true, "Could not write score file %s", DATABASE);
 }

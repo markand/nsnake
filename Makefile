@@ -31,7 +31,7 @@ BINDIR=         ${PREFIX}/bin
 MANDIR=         ${PREFIX}/share/man
 VARDIR=         ${PREFIX}/var
 
-VERSION=        2.3.0
+VERSION=        3.0.0
 SRCS=           nsnake.c
 OBJS=           ${SRCS:.c=.o}
 
@@ -41,12 +41,7 @@ OBJS=           ${SRCS:.c=.o}
 all: nsnake
 
 .c.o:
-	${CC} -c -DVARDIR=\"${VARDIR}\" ${PORTCFLAGS} ${CFLAGS} $<
-
-${OBJS}: sysconfig.h
-
-sysconfig.h: sysconfig.sh
-	CC="${CC}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ./sysconfig.sh > $@
+	${CC} -c -DVARDIR=\"${VARDIR}\" ${CFLAGS} $<
 
 nsnake: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS} ${LIBS}
@@ -67,13 +62,13 @@ uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
 
 clean:
-	rm -f ${OBJS} nsnake sysconfig.h nsnake-${VERSION}.tar.xz
+	rm -f ${OBJS} ${PROG} nsnake-${VERSION}.tar.xz
 
 dist: clean
 	mkdir nsnake-${VERSION}
 	cp -R extern nsnake-${VERSION}
 	cp CHANGES.md INSTALL.md LICENSE.md README.md nsnake-${VERSION}
-	cp Makefile nsnake.6 nsnake.c sysconfig.sh nsnake-${VERSION}
+	cp Makefile nsnake.6 nsnake.c nsnake-${VERSION}
 	tar -cJf nsnake-${VERSION}.tar.xz nsnake-${VERSION}
 	rm -rf nsnake-${VERSION}
 

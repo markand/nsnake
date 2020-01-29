@@ -1,4 +1,5 @@
 NSnake TODO
 ===========
 
-- Use less globals.
+- Avoid slow response on key presses.
+- Add new states: menu, running (+dead/+paused), resizing, scores.
