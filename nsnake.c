@@ -384,6 +384,7 @@ update(void)
 static void
 draw(void)
 {
+	werase(game_view.top);
 	werase(game_view.frame);
 
 	for (int i = 0; i < snake.length; ++i) {
@@ -408,7 +409,7 @@ draw(void)
 	/* Print paused if necessary. */
 	if (snake.paused) {
 		mvwprintw(game_view.frame, HEIGHT / 2, (WIDTH / 2) - 3, "PAUSE");
-		mvwprintw(game_view.frame, (HEIGHT / 2) + 1, (WIDTH / 2) - 11, "Press any key to resume");
+		mvwprintw(game_view.frame, (HEIGHT / 2) + 1, (WIDTH / 2) - 12, "Press any key to resume");
 	}
 
 	/* Print score */
@@ -545,7 +546,7 @@ state_menu(void)
 
 	/* Print menu actions. */
 	const int cx = (COLS / 2) - 14;
-	const int cy = (LINES / 2) + (TITLE_HEIGHT / 2);
+	const int cy = (LINES / 2) + (TITLE_HEIGHT / 2) - 3;
 
 	mvprintw(cy + 2, cx, "Hit <Return> to play the game");
 	mvprintw(cy + 3, cx, "Hit <n> to %s scoring",
@@ -715,7 +716,7 @@ init(void)
 	/* Init menu view. */
 	menu_view.top = newwin(1, 0, 0, 0);
 	menu_view.frame = newwin(TITLE_HEIGHT, TITLE_WIDTH,
-	    (LINES / 2) - (TITLE_HEIGHT / 2),
+	    (LINES / 2) - (TITLE_HEIGHT / 2) - 3,
 	    (COLS  / 2) - (TITLE_WIDTH / 2));
 
 	/* Init score view. */
