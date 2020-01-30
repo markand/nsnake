@@ -1,13 +1,18 @@
 NSnake INSTALL
 ==============
 
-To build nsnake, you need a C compiler and ncurses.
+Installation instructions.
 
-Note for Windows
-----------------
+Requirements
+------------
 
-NSnake works on Windows but it does not have a native curses library, however
-you can use [pdcurses][] which is the implementation known to work with NSnake.
+- POSIX system, known to work under:
+  - Linux
+  - FreeBSD, NetBSD, OpenBSD
+  - Windows using cygwin
+- C11 compiler, tested with:
+  - GCC 9, Clang 9
+- ncurses library.
 
 Build
 -----
@@ -39,5 +44,3 @@ automatically done as `make install` step.
 
 The directory for saving the scores is writable by this group to make sure the
 executable can write it from any user.
-
-[pdcurses]: https://pdcurses.org
