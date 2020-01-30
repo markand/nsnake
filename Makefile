@@ -20,7 +20,7 @@
 
 # Build options.
 CC=             cc
-CFLAGS=         -std=c11 -Wall -Wextra -pedantic -D_XOPEN_SOURCE=700
+CFLAGS=         -std=c11 -pedantic -O3 -D_XOPEN_SOURCE=700
 LDFLAGS=        -lncurses
 GID=            games
 UID=            games

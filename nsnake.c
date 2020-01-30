@@ -538,7 +538,7 @@ state_menu(void)
 			set(menu_view.frame, COLOR_PAIR(options.color) | A_BOLD);
 
 		for (const char *p = menu_view.title[row]; *p; ++p)
-			waddch(menu_view.frame, *p == '1' ? ACS_BLOCK : ' ');
+			waddch(menu_view.frame, *p == '1' ? '.' : ' ');
 
 		if (options.color >= 0)
 			unset(menu_view.frame, COLOR_PAIR(options.color) | A_BOLD);
