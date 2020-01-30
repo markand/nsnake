@@ -41,7 +41,7 @@ OBJS=           ${SRCS:.c=.o}
 all: nsnake
 
 .c.o:
-	${CC} -c -DVARDIR=\"${VARDIR}\" ${CFLAGS} $<
+	${CC} -c -DVARDIR=\"${VARDIR}\" -DVERSION=\"${VERSION}\" ${CFLAGS} $<
 
 nsnake: ${OBJS}
 	${CC} -o $@ ${OBJS} ${LDFLAGS} ${LIBS}
@@ -62,7 +62,7 @@ uninstall:
 	rm -f ${DESTDIR}${MANDIR}/man6/nsnake.6
 
 clean:
-	rm -f ${OBJS} ${PROG} nsnake-${VERSION}.tar.xz
+	rm -f ${OBJS} nsnake nsnake-${VERSION}.tar.xz
 
 dist: clean
 	mkdir nsnake-${VERSION}
