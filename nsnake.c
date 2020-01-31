@@ -480,8 +480,8 @@ scores_register(void)
 	struct score scores[SCORES_MAX] = {0};
 	struct score *s;
 
-	if (!scores_read(scores))
-		return false;
+	/* Do not test result, file may not exist yet. */
+	scores_read(scores);
 
 	for (s = scores; s != &scores[SCORES_MAX]; ++s)
 		if (snake.score >= s->score)
