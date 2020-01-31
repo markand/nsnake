@@ -29,23 +29,23 @@
 
 #include <curses.h>
 
-#define HEIGHT          23
-#define WIDTH           78
-#define SIZE            ((HEIGHT - 2) * (WIDTH - 2))
+#define HEIGHT          	23
+#define WIDTH           	78
+#define SIZE            	((HEIGHT - 2) * (WIDTH - 2))
 
 #if !defined(VARDIR)
-#define VARDIR          "/var"
+#define VARDIR          	"/var"
 #endif
 
-#define DATABASE        VARDIR "/db/nsnake/scores.txt"
-#define DATABASE_WC     VARDIR "/db/nsnake/scores-wc.txt"
+#define DATABASE        	VARDIR "/db/nsnake/scores.txt"
+#define DATABASE_WC     	VARDIR "/db/nsnake/scores-wc.txt"
 
 /* Maximum number of scores allowed in database. */
-#define SCORES_MAX      10
+#define SCORES_MAX      	10
 
 /* Calculated from the title dimensions. */
-#define TITLE_WIDTH     62
-#define TITLE_HEIGHT    13
+#define TITLE_WIDTH     	62
+#define TITLE_HEIGHT    	13
 
 /* Frame size where scores list is written. */
 #define SCORE_FRAME_WIDTH       60
@@ -85,7 +85,7 @@ static struct {
 	bool warp;              /* Enable warp (wall-crossing). */
 	bool quick;             /* Don't save scores. */
 } options = {
-	.color  = 2,
+	.color  = 4,
 	.warp   = true,
 	.quick  = false,
 };
@@ -388,15 +388,15 @@ draw(void)
 	werase(game_view.frame);
 
 	for (int i = 0; i < snake.length; ++i) {
-		set(game_view.frame, COLOR_PAIR(options.color));
+		set(game_view.frame, COLOR_PAIR(options.color + 3));
 		mvwaddch(game_view.frame, snake.pos[i].y, snake.pos[i].x, '#');
-		unset(game_view.frame, COLOR_PAIR(options.color));
+		unset(game_view.frame, COLOR_PAIR(options.color + 3));
 	}
 
 	/* Print head */
-	set(game_view.frame, COLOR_PAIR(options.color) | A_BOLD);
+	set(game_view.frame, COLOR_PAIR(options.color + 3) | A_BOLD);
 	mvwaddch(game_view.frame, snake.pos[0].y, snake.pos[0].x, '@');
-	unset(game_view.frame, COLOR_PAIR(options.color) | A_BOLD);
+	unset(game_view.frame, COLOR_PAIR(options.color + 3) | A_BOLD);
 
 	/* Erase the snake's tail */
 	mvwaddch(game_view.frame, snake.pos[snake.length].y, snake.pos[snake.length].x, ' ');
@@ -533,15 +533,17 @@ state_menu(void)
 	for (int row = 0; menu_view.title[row]; ++row) {
 		wmove(menu_view.frame, row + 2, 3);
 
-		/* TODO: use block character. */
-		if (options.color >= 0)
-			set(menu_view.frame, COLOR_PAIR(options.color) | A_BOLD);
-
-		for (const char *p = menu_view.title[row]; *p; ++p)
-			waddch(menu_view.frame, *p == '1' ? '.' : ' ');
-
-		if (options.color >= 0)
-			unset(menu_view.frame, COLOR_PAIR(options.color) | A_BOLD);
+		for (const char *p = menu_view.title[row]; *p; ++p) {
+			if (*p == '1') {
+				if (options.color >= 0) {
+					set(menu_view.frame, COLOR_PAIR(2));
+					waddch(menu_view.frame, ' ');
+					unset(menu_view.frame, COLOR_PAIR(2));
+				} else
+					waddch(menu_view.frame, '.');
+			} else
+				waddch(menu_view.frame, ' ');
+		}
 	}
 
 	/* Print menu actions. */
@@ -696,12 +698,12 @@ init(void)
 		use_default_colors();
 		start_color();
 
-		init_pair(0, COLOR_WHITE, COLOR_BLACK); /* topbar */
-		init_pair(1, COLOR_YELLOW, -1);         /* food */
-		init_pair(20, COLOR_YELLOW, COLOR_YELLOW);
+		init_pair(0, COLOR_WHITE, COLOR_BLACK); /* Bar */
+		init_pair(1, COLOR_YELLOW, -1);         /* Food */
+		init_pair(2, -1, COLOR_CYAN);           /* Title */
 
 		for (int i = 0; i < COLORS; ++i)
-			init_pair(i + 2, i, -1);
+			init_pair(i + 3, i, -1);
 	}
 
 	/* Init game view. */
@@ -750,7 +752,9 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	for (int ch; (ch = getopt(argc, argv, "cC:nsw")) != -1; ) {
+	int ch;
+
+	while ((ch = getopt(argc, argv, "cC:nsw")) != -1) {
 		switch (ch) {
 		case 'c':
 			options.color = -1;
