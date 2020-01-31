@@ -1,10 +1,14 @@
 NSnake CHANGES
 ==============
 
-nsnake current
+nsnake 3.0.0 ????-??-??
 -----------------------
 
-- Removal of non-POSIX err(3) functions.
+- Removal of non-POSIX err(3) functions,
+- Added a title screen,
+- Added a scores screen,
+- Simplified some parts of the code,
+- Changed scores format into plain text.
 
 nsnake 2.2.1 2020-01-26
 -----------------------

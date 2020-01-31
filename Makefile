@@ -66,7 +66,6 @@ clean:
 
 dist: clean
 	mkdir nsnake-${VERSION}
-	cp -R extern nsnake-${VERSION}
 	cp CHANGES.md INSTALL.md LICENSE.md README.md nsnake-${VERSION}
 	cp Makefile nsnake.6 nsnake.c nsnake-${VERSION}
 	tar -cJf nsnake-${VERSION}.tar.xz nsnake-${VERSION}
