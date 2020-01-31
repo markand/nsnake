@@ -628,6 +628,7 @@ state_score(void)
 	int y = 1;
 
 	erase();
+	werase(score_view.frame);
 	box(score_view.frame, ACS_VLINE, ACS_HLINE);
 
 	/* Ignore result, we print an empty list. */
