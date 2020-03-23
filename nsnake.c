@@ -16,6 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if defined(__OpenBSD__)
+#	define _BSD_SOURCE
+#endif
+
 #include <errno.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -753,6 +757,11 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+
+#if defined(__OpenBSD__)
+	if (pledge("cpath getpw rpath stdio tty wpath", NULL) < 0)
+		die(true, "pledge");
+#endif
 
 	while ((ch = getopt(argc, argv, "cC:nsw")) != -1) {
 		switch (ch) {
