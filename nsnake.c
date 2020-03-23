@@ -495,6 +495,8 @@ scores_register(void)
 	if (s == &scores[SCORES_MAX])
 		return true;
 
+	/* Move the current score index to the next one. */
+	memmove(&s[1], &s[0], sizeof (struct score) * (SCORES_MAX - (&s[1] - scores)));
 	strncpy(s->name, name(), sizeof (s->name));
 	s->score = snake.score;
 	s->time = time(NULL);
