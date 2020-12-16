@@ -49,13 +49,13 @@ nsnake: ${OBJS}
 install: nsnake
 	mkdir -p ${DESTDIR}${BINDIR}
 	cp nsnake ${DESTDIR}${BINDIR}
-	chown ${GID}:${UID} ${DESTDIR}${BINDIR}/nsnake
+	chown ${UID}:${GID} ${DESTDIR}${BINDIR}/nsnake
 	chmod 2555 ${DESTDIR}${BINDIR}/nsnake
 	mkdir -p ${DESTDIR}${MANDIR}/man6
 	cp nsnake.6 ${DESTDIR}${MANDIR}/man6
 	mkdir -p ${DESTDIR}${VARDIR}/db/nsnake
 	chmod 770 ${DESTDIR}${VARDIR}/db/nsnake
-	chown ${GID}:${UID} ${DESTDIR}${VARDIR}/db/nsnake
+	chown ${UID}:${GID} ${DESTDIR}${VARDIR}/db/nsnake
 
 uninstall:
 	rm -f ${DESTDIR}${BINDIR}/nsnake
