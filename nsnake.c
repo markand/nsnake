@@ -137,7 +137,7 @@ static void             rotate(int ch);
 static void             input(void);
 static void             update(void);
 static void             draw(void);
-static void             wait(unsigned int);
+static void             delay(unsigned int);
 static const char *     scores_path(void);
 static bool             scores_read(struct score scores[]);
 static bool             scores_write(const struct score scores[]);
@@ -423,7 +423,7 @@ draw(void)
 }
 
 static void
-wait(unsigned int ms)
+delay(unsigned int ms)
 {
 	struct timespec ts = {
 		.tv_sec = 0,
@@ -607,7 +607,7 @@ state_run(void)
 		draw();
 		wrefresh(game_view.top);
 		wrefresh(game_view.frame);
-		wait(snake.diry ? 118 : 100);
+		delay(snake.diry ? 118 : 100);
 	}
 
 	/* Register score only if wanted. */
