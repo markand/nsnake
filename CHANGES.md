@@ -69,7 +69,7 @@ nsnake 1.1.0 2011-04-03
 -----------------------
 
 - Bug where food spawn on snake fixed,
-- New feature : if screen is filled, snake is reduced to the default size,
+- New feature: if screen is filled, snake is reduced to the default size,
 - Show scores according to -w switch,
 - Improved security parsing nicknames in the score file,
 - Added more security in insertscore() function,
