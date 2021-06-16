@@ -23,7 +23,6 @@
 #include <errno.h>
 #include <pwd.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
@@ -33,23 +32,23 @@
 
 #include <curses.h>
 
-#define HEIGHT          	23
-#define WIDTH           	78
-#define SIZE            	((HEIGHT - 2) * (WIDTH - 2))
+#define HEIGHT                  23
+#define WIDTH                   78
+#define SIZE                    ((HEIGHT - 2) * (WIDTH - 2))
 
 #if !defined(VARDIR)
-#define VARDIR          	"/var"
+#define VARDIR                  "/var"
 #endif
 
-#define DATABASE        	VARDIR "/db/nsnake/scores.txt"
-#define DATABASE_WC     	VARDIR "/db/nsnake/scores-wc.txt"
+#define DATABASE                VARDIR "/db/nsnake/scores.txt"
+#define DATABASE_WC             VARDIR "/db/nsnake/scores-wc.txt"
 
 /* Maximum number of scores allowed in database. */
-#define SCORES_MAX      	10
+#define SCORES_MAX              10
 
 /* Calculated from the title dimensions. */
-#define TITLE_WIDTH     	62
-#define TITLE_HEIGHT    	13
+#define TITLE_WIDTH             62
+#define TITLE_HEIGHT            13
 
 /* Frame size where scores list is written. */
 #define SCORE_FRAME_WIDTH       60
@@ -60,7 +59,7 @@ static struct {
 	int length;             /* Snake's length. */
 	int dirx;               /* Direction in x could be 0, 1 or -1. */
 	int diry;               /* Same for y. */
-	bool paused;            /* Game is paused */
+	int paused;             /* Game is paused */
 
 	struct {
 		int x;          /* Snake slices in x. */
@@ -86,12 +85,12 @@ struct score {
 
 static struct {
 	int color;              /* Color: 0-8 and -1 to disable. */
-	bool warp;              /* Enable warp (wall-crossing). */
-	bool quick;             /* Don't save scores. */
+	int warp;               /* Enable warp (wall-crossing). */
+	int quick;              /* Don't save scores. */
 } options = {
 	.color  = 4,
-	.warp   = true,
-	.quick  = false,
+	.warp   = 1,
+	.quick  = 0,
 };
 
 static struct {
@@ -124,24 +123,24 @@ static struct {
 } score_view;
 
 static const char *     name(void);
-static noreturn void    die(bool, const char *, ...);
+static noreturn void    die(int, const char *, ...);
 static void             set(WINDOW *, int);
 static void             unset(WINDOW *, int);
-static bool             is_snake(int, int);
-static bool             is_wall(int, int);
-static bool             is_dead(void);
-static bool             is_eaten(void);
+static int              is_snake(int, int);
+static int              is_wall(int, int);
+static int              is_dead(void);
+static int              is_eaten(void);
 static void             prepare(void);
 static void             spawn(void);
-static void             rotate(int ch);
+static void             rotate(int);
 static void             input(void);
 static void             update(void);
 static void             draw(void);
 static void             delay(unsigned int);
 static const char *     scores_path(void);
-static bool             scores_read(struct score scores[]);
-static bool             scores_write(const struct score scores[]);
-static bool             scores_register(void);
+static int              scores_read(struct score []);
+static int              scores_write(const struct score []);
+static int              scores_register(void);
 static void             scores_show(void);
 static void             state_menu(void);
 static void             state_run(void);
@@ -162,7 +161,7 @@ name(void)
 }
 
 static noreturn void
-die(bool sys, const char *fmt, ...)
+die(int sys, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -192,42 +191,42 @@ unset(WINDOW *frame, int pair)
 		wattroff(frame, pair);
 }
 
-static bool
+static int
 is_snake(int x, int y)
 {
 	/*
 	 * Check if the coordinate is within the snake part we start at 1
 	 * because head should not be considered to avoid `is_dead' to return
-	 * true on snake's head.
+	 * 1 on snake's head.
 	 */
 	for (int i = 1; i < snake.length; ++i)
 		if (snake.pos[i].x == x && snake.pos[i].y == y)
-			return true;
+			return 1;
 
-	return false;
+	return 0;
 }
 
-static bool
+static int
 is_wall(int x, int y)
 {
 	return x == 0 || x == WIDTH - 1 || y == 0 || y == HEIGHT - 1;
 }
 
-static bool
+static int
 is_dead(void)
 {
 	/* Head on body. */
 	if (is_snake(snake.pos[0].x, snake.pos[0].y))
-		return true;
+		return 1;
 
 	/* Head on wall. */
 	if (!options.warp)
 		return is_wall(snake.pos[0].x, snake.pos[0].y);
 
-	return false;
+	return 0;
 }
 
-static bool
+static int
 is_eaten(void)
 {
 	return snake.pos[0].x == food.x && snake.pos[0].y == food.y;
@@ -237,7 +236,7 @@ static void
 prepare(void)
 {
 	/* Disable blocking mode. */
-	nodelay(stdscr, true);
+	nodelay(stdscr, 1);
 	clear();
 	werase(game_view.frame);
 
@@ -326,8 +325,8 @@ input(void)
 
 	switch ((ch = getch())) {
 	case 'p':
-		nodelay(stdscr, false);
-		snake.paused = true;
+		nodelay(stdscr, 0);
+		snake.paused = 1;
 		break;
 	case 'q':
 		/* Create game over. */
@@ -339,8 +338,8 @@ input(void)
 		break;
 	default:
 		if (snake.paused) {
-			nodelay(stdscr, true);
-			snake.paused = false;
+			nodelay(stdscr, 1);
+			snake.paused = 0;
 		}
 
 		rotate(ch);
@@ -439,13 +438,13 @@ scores_path(void)
 	return options.warp ? DATABASE_WC : DATABASE;
 }
 
-static bool
+static int
 scores_read(struct score scores[SCORES_MAX])
 {
 	FILE *fp;
 
 	if (!(fp = fopen(scores_path(), "r")))
-		return false;
+		return -1;
 
 	for (struct score *s = scores; s != &scores[SCORES_MAX]; ) {
 		int ret = fscanf(fp, "%16[^\\|]|%d|%lld\n", s->name,
@@ -459,26 +458,26 @@ scores_read(struct score scores[SCORES_MAX])
 
 	fclose(fp);
 
-	return true;
+	return 0;
 }
 
-static bool
+static int
 scores_write(const struct score scores[SCORES_MAX])
 {
 	FILE *fp;
 
 	if (!(fp = fopen(scores_path(), "w")))
-		return false;
+		return 0;
 
 	for (const struct score *s = scores; s != &scores[SCORES_MAX] && s->name[0]; ++s)
 		fprintf(fp, "%s|%d|%lld\n", s->name, s->score, s->time);
 
 	fclose(fp);
 
-	return true;
+	return 1;
 }
 
-static bool
+static int
 scores_register(void)
 {
 	struct score scores[SCORES_MAX] = {0};
@@ -493,7 +492,7 @@ scores_register(void)
 
 	/* Not in top list. */
 	if (s == &scores[SCORES_MAX])
-		return true;
+		return -1;
 
 	/* Move the current score index to the next one. */
 	memmove(&s[1], &s[0], sizeof (struct score) * (SCORES_MAX - (&s[1] - scores)));
@@ -509,8 +508,8 @@ scores_show(void)
 {
 	struct score scores[SCORES_MAX] = {0};
 
-	if (!scores_read(scores))
-		die(true, "could not open scores");
+	if (scores_read(scores) < 0)
+		die(1, "could not open scores");
 
 	for (struct score *s = scores; s != &scores[SCORES_MAX]; ++s) {
 		if (s->name[0]) {
@@ -528,7 +527,7 @@ static void
 state_menu(void)
 {
 	/* We don't need non-blocking mode here. */
-	nodelay(stdscr, false);
+	nodelay(stdscr, 0);
 	clear();
 
 	/* Top bar. */
@@ -614,7 +613,7 @@ state_run(void)
 	if (!options.quick)
 		scores_register();
 
-	nodelay(stdscr, false);
+	nodelay(stdscr, 0);
 
 	do {
 		/* Show game over in the middle. */
@@ -693,7 +692,7 @@ init(void)
 	keypad(stdscr, TRUE);
 
 	if (COLS < (WIDTH + 1) || LINES < (HEIGHT + 1))
-		die(false, "abort: terminal too small");
+		die(0, "abort: terminal too small");
 
 	if (options.color > 8)
 		options.color = 4;
@@ -762,7 +761,7 @@ main(int argc, char *argv[])
 
 #if defined(__OpenBSD__)
 	if (pledge("cpath getpw rpath stdio tty wpath", NULL) < 0)
-		die(true, "pledge");
+		die(1, "pledge");
 #endif
 
 	while ((ch = getopt(argc, argv, "cC:nsw")) != -1) {
@@ -774,13 +773,13 @@ main(int argc, char *argv[])
 			options.color = atoi(optarg);
 			break;
 		case 'n':
-			options.quick = true;
+			options.quick = 1;
 			break;
 		case 's':
 			state = &(state_score_exit);
 			break;
 		case 'w':
-			options.warp = false;
+			options.warp = 0;
 			break;
 		default:
 			usage();

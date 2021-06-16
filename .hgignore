@@ -1,5 +1,6 @@
 ^nsnake$
 ^nsnake\.o$
 ^tags$
+^cscope\.out$
 ^sysconfig\.h$
 ^nsnake-\d+\.\d+\.\d\.tar\.xz(\.asc)?$
