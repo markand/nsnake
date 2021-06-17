@@ -1,7 +1,7 @@
 NSnake CHANGES
 ==============
 
-nsnake 3.0.0 ????-??-??
+nsnake 3.0.0 2021-06-17
 -----------------------
 
 - Removal of non-POSIX err(3) functions,
