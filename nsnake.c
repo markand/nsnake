@@ -17,7 +17,7 @@
  */
 
 #if defined(__OpenBSD__)
-#	define _BSD_SOURCE
+#       define _BSD_SOURCE
 #endif
 
 #include <errno.h>

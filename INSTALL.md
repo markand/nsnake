@@ -19,8 +19,8 @@ Build
 
 Go to the source directory and type the following commands:
 
-    make
-    make install
+	make
+	make install
 
 Build configuration
 -------------------
