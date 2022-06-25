@@ -25,7 +25,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -123,7 +122,7 @@ static struct {
 } score_view;
 
 static const char *     name(void);
-static noreturn void    die(int, const char *, ...);
+static void             die(int, const char *, ...);
 static void             set(WINDOW *, int);
 static void             unset(WINDOW *, int);
 static int              is_snake(int, int);
@@ -148,7 +147,7 @@ static void             state_score(void);
 static void             state_score_exit(void);
 static void             init(void);
 static void             quit(void);
-static noreturn void    usage(void);
+static void             usage(void);
 
 void (*state)(void) = &(state_menu);
 
@@ -160,7 +159,7 @@ name(void)
 	return pw ? pw->pw_name : "unknown";
 }
 
-static noreturn void
+static void
 die(int sys, const char *fmt, ...)
 {
 	va_list ap;
@@ -747,7 +746,7 @@ quit(void)
 	endwin();
 }
 
-static noreturn void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: nsnake [-cnsw] [-C color]\n");
