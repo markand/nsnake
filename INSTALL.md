@@ -8,11 +8,12 @@ Requirements
 
 - POSIX system, known to work under:
   - Linux
-  - FreeBSD, NetBSD, OpenBSD
+  - FreeBSD, NetBSD, OpenBSD, DragonFlyBSD
   - Windows using cygwin
 - C11 compiler, tested with:
   - GCC 9, Clang 9
 - ncurses library.
+- GNU make.
 
 Build
 -----
@@ -21,6 +22,8 @@ Go to the source directory and type the following commands:
 
 	make
 	make install
+
+On some systems you make need to use `gmake` rather than make.
 
 Build configuration
 -------------------

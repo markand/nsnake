@@ -1,6 +1,11 @@
 NSnake CHANGES
 ==============
 
+nsnake 3.0.1 2021-06-17
+-----------------------
+
+- Switch to GNU make for portability.
+
 nsnake 3.0.0 2021-06-17
 -----------------------
 
