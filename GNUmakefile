@@ -32,6 +32,7 @@ OBJS :=         $(SRCS:.c=.o)
 
 OS :=           $(shell uname -s)
 
+# Overrides for some OSes.
 ifeq ($(OS),FreeBSD)
 INCS :=         -I/usr/local/include
 LIBS :=         -L/usr/local/lib -lncurses
@@ -43,6 +44,7 @@ else ifeq ($(OS),OpenBSD)
 # OpenBSD has no games UID, use root instead (we ran as setgid so that's fine.)
 UID :=          root
 LIBS :=         -lncurses
+MANDIR :=       $(PREFIX)/man
 else
 # Other linux, expect pkg-config files.
 INCS :=         $(shell pkg-config --cflags ncurses)
