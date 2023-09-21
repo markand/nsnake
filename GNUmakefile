@@ -18,7 +18,7 @@
 
 # Build options.
 GID :=          games
-UID :=          games
+UID :=          root
 
 # Installation options.
 PREFIX :=       /usr/local
@@ -26,7 +26,7 @@ BINDIR :=       $(PREFIX)/bin
 MANDIR :=       $(PREFIX)/share/man
 VARDIR :=       $(PREFIX)/var
 
-VERSION :=      3.0.1
+VERSION :=      3.0.2
 SRCS :=         nsnake.c
 OBJS :=         $(SRCS:.c=.o)
 
@@ -41,8 +41,7 @@ else ifeq ($(OS),DragonFly)
 INCS :=         -I/usr/local/include -I/usr/local/include/ncurses
 LIBS :=         -L/usr/local/lib -lncurses
 else ifeq ($(OS),OpenBSD)
-# OpenBSD has no games UID, use root instead (we ran as setgid so that's fine.)
-UID :=          root
+# OpenBSD has no games UID
 LIBS :=         -lncurses
 MANDIR :=       $(PREFIX)/man
 else
@@ -51,24 +50,23 @@ INCS :=         $(shell pkg-config --cflags ncurses)
 LIBS :=         $(shell pkg-config --libs ncurses)
 endif
 
+override CPPFLAGS += -DVARDIR=\"$(VARDIR)\"
+override CPPFLAGS += -DVERSION=\"$(VERSION)\"
+
+override CFLAGS += $(INCS)
+
+override LDLIBS += $(LIBS)
+
 all: nsnake
-
-%.o: %.c
-	$(CC) -c $< -o $@ -DVARDIR=\"$(VARDIR)\" -DVERSION=\"$(VERSION)\" $(INCS) $(CFLAGS)
-
-nsnake: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 install:
 	mkdir -p $(DESTDIR)$(BINDIR)
 	cp nsnake $(DESTDIR)$(BINDIR)
-	chown $(UID):$(GID) $(DESTDIR)$(BINDIR)/nsnake
-	chmod 2555 $(DESTDIR)$(BINDIR)/nsnake
 	mkdir -p $(DESTDIR)$(MANDIR)/man6
 	cp nsnake.6 $(DESTDIR)$(MANDIR)/man6
 	mkdir -p $(DESTDIR)$(VARDIR)/db/nsnake
-	chmod 770 $(DESTDIR)$(VARDIR)/db/nsnake
 	chown $(UID):$(GID) $(DESTDIR)$(VARDIR)/db/nsnake
+	chmod 770 $(DESTDIR)$(VARDIR)/db/nsnake
 
 clean:
 	rm -f nsnake $(OBJS)
