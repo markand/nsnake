@@ -416,7 +416,7 @@ draw(void)
 
 	/* Print score */
 	wmove(game_view.top, 0, 0);
-	wprintw(game_view.top, "Score: %d", snake.score, snake.dirx, snake.diry);
+	wprintw(game_view.top, "Score: %d", snake.score);
 	box(game_view.frame, ACS_VLINE, ACS_HLINE);
 }
 
