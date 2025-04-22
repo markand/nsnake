@@ -26,7 +26,7 @@ BINDIR :=       $(PREFIX)/bin
 MANDIR :=       $(PREFIX)/share/man
 VARDIR :=       $(PREFIX)/var
 
-VERSION :=      3.0.2
+VERSION :=      3.0.1
 SRCS :=         nsnake.c
 OBJS :=         $(SRCS:.c=.o)
 
