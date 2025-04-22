@@ -1,6 +1,13 @@
 NSnake CHANGES
 ==============
 
+nsnake 3.0.1 2025-04-22
+-----------------------
+
+- Ditch setgid in favor to writable group.
+- Simplify GNUmakefile.
+- Switch to GNU make for portability.
+
 nsnake 3.0.0 2021-06-17
 -----------------------
 

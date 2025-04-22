@@ -8,11 +8,12 @@ Requirements
 
 - POSIX system, known to work under:
   - Linux
-  - FreeBSD, NetBSD, OpenBSD
+  - FreeBSD, NetBSD, OpenBSD, DragonFlyBSD
   - Windows using cygwin
 - C11 compiler, tested with:
   - GCC 9, Clang 9
 - ncurses library.
+- GNU make.
 
 Build
 -----
@@ -22,12 +23,14 @@ Go to the source directory and type the following commands:
 	make
 	make install
 
+On some systems you make need to use `gmake` rather than make.
+
 Build configuration
 -------------------
 
 The following options may be used to configure the build.
 
-- `GID`: change the gid to chown (default: games),
+- `GID`: change the gid to chown (default: root),
 - `UID`: change the uid to chown (default: games),
 - `PREFIX`: root directory for installation
 - `BINDIR`: change to the installation of executable (default: PREFIX/bin),
@@ -38,9 +41,8 @@ Scores file
 -----------
 
 NSnake uses a scores file in order to share all users scores on the same
-machine. In order to work, the binary `nsnake` but have setgid file attribute
-and its database directory with the appropriate permissions. This is
-automatically done as `make install` step.
+machine. In order to work, your user must have read/write permissions to the
+directory which is created at install time, it defaults to UID:GID (see above).
 
-The directory for saving the scores is writable by this group to make sure the
-executable can write it from any user.
+The directory for saving the scores is writable by this group to make sure your
+user can write it from any user.
